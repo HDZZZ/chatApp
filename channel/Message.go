@@ -50,6 +50,6 @@ func (msgBody *MessageBody) createImageContent(message ImageMessage) {
 	msgBody.Content = message
 }
 
-func (msgBody *MessageBody) createNotificationContent(message NotificationMessage) {
+func (msgBody *MessageBody) CreateNotificationContent(message NotificationMessage) {
 	msgBody.Content = message
 }

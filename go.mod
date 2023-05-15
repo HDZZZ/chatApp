@@ -40,8 +40,11 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/HDDDZ/test/chatApp/db => /Users/z./project/goProject/test/chatApp/DB
+replace github.com/HDDDZ/test/chatApp/db => /Users/z./project/goProject/test/chatApp/db
 
 replace github.com/HDDDZ/test/chatApp/util => /Users/z./project/goProject/test/chatApp/util
 
 replace github.com/HDDDZ/test/chatApp/channel => /Users/z./project/goProject/test/chatApp/channel
+
+replace github.com/HDDDZ/test/chatApp/common => /Users/z./project/goProject/test/chatApp/common
+
