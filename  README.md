@@ -1,5 +1,6 @@
 # chatApp
 there is a web server application that have been go as developed tool
+注:当前项目缺少go.work文件,如想运行,请自行添加或者联系开发者
 
 # 项目计划表
 #### 登陆模块(一)
@@ -21,3 +22,5 @@ there is a web server application that have been go as developed tool
 
 
 ### 朋友圈
+
+
