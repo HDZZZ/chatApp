@@ -1,6 +1,13 @@
 package user
 
-import "github.com/gin-gonic/gin"
+import (
+	"errors"
+	"strconv"
+
+	Common "github.com/HDDDZ/test/chatApp/common"
+	DB "github.com/HDDDZ/test/chatApp/db"
+	"github.com/gin-gonic/gin"
+)
 
 type FriendService interface {
 	sendRequestOfAddingFriend(c *gin.Context)
@@ -12,4 +19,141 @@ type FriendService interface {
 }
 
 type FriendServiceInstance struct {
+}
+
+func (instance *FriendServiceInstance) sendRequestOfAddingFriend(c *gin.Context) {
+	receiverUid, err := getMustParamNumber(Common.REQUEST_PARAMS_RECEIVERUID, c)
+	if err != nil {
+		return
+	}
+	msg := c.Query(Common.REQUEST_PARAMS_REQUEST_MSG)
+	user, err := getTokenByGin(c)
+	if err != nil {
+		return
+	}
+	_, err = DB.SendRequest(user.Id, receiverUid, msg)
+	if err != nil {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2001, Common.ErrCode[Common.ERROR_CODE_2001]+err.Error()))
+		return
+	}
+	c.JSON(200, Common.CreateResultDataSuccess("success"))
+}
+func (instance *FriendServiceInstance) agreeRequestOfAddingFriend(c *gin.Context) {
+	requestID, err := getMustParamNumber(Common.REQUEST_PARAMS_REQUEST_ID, c)
+	if err != nil {
+		return
+	}
+	user, err := getTokenByGin(c)
+	if err != nil {
+		return
+	}
+	err = checkHaveOperation(requestID, user.Id, c)
+	if err != nil {
+		return
+	}
+	err = DB.AgreeRequest(requestID)
+	if err != nil {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2002, Common.ErrCode[Common.ERROR_CODE_2002]+err.Error()))
+		return
+	}
+	c.JSON(200, Common.CreateResultDataSuccess("success"))
+}
+
+func (instance *FriendServiceInstance) refuseRequestOfAddingFriend(c *gin.Context) {
+	requestID, err := getMustParamNumber(Common.REQUEST_PARAMS_REQUEST_ID, c)
+	if err != nil {
+		return
+	}
+	user, err := getTokenByGin(c)
+	if err != nil {
+		return
+	}
+	err = checkHaveOperation(requestID, user.Id, c)
+	if err != nil {
+		return
+	}
+	err = DB.RefuseRequest(requestID)
+	if err != nil {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2003, Common.ErrCode[Common.ERROR_CODE_2003]+err.Error()))
+		return
+	}
+	c.JSON(200, Common.CreateResultDataSuccess("success"))
+}
+
+func (instance *FriendServiceInstance) getRequestOfAddingFriendList(c *gin.Context) {
+	user, err := getTokenByGin(c)
+	if err != nil {
+		return
+	}
+	requests := DB.GetAllRequestOfSomebody(user.Id)
+	c.JSON(200, Common.CreateResultDataSuccess(requests))
+}
+
+func (instance *FriendServiceInstance) getAllFriendsInfo(c *gin.Context) {
+	user, err := getTokenByGin(c)
+	if err != nil {
+		return
+	}
+	users := DB.GetAllFriends(user.Id)
+	c.JSON(200, Common.CreateResultDataSuccess(users))
+}
+
+func (instance *FriendServiceInstance) getAllFriendsUid(c *gin.Context) {
+	user, err := getTokenByGin(c)
+	if err != nil {
+		return
+	}
+	users := DB.GetAllFriendsUid(user.Id)
+	c.JSON(200, Common.CreateResultDataSuccess(users))
+}
+
+/*
+**
+
+	通过gin.contxt获取用户, 完全处理token, 如果异常会直接调用c.json
+*/
+func getTokenByGin(c *gin.Context) (DB.User, error) {
+	tokens := c.Request.Header["Token"]
+	if len(tokens) == 0 {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_103, Common.ErrCode[Common.ERROR_CODE_103]))
+		return DB.User{}, errors.New("have no token")
+	}
+	user := getUserByToken(tokens[0])
+	if user == (DB.User{}) {
+		return DB.User{}, errors.New("get get user by token")
+	}
+	return user, nil
+}
+
+/*
+**
+ */
+func getMustParamNumber(paramKey string, c *gin.Context) (int, error) {
+	param, err := strconv.Atoi(c.Query(paramKey))
+	if err != nil {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_102, Common.ErrCode[Common.ERROR_CODE_102]))
+		return 0, errors.New("params not correct")
+	}
+	return param, nil
+}
+
+/*
+*
+检查本人是否有权限行使对该条请求的状态修改
+*/
+func checkHaveOperation(requestID int, userId int, c *gin.Context) error {
+	request := DB.QueryRequestById(requestID)
+	if request == (DB.ReuqestOfAddingFriend{}) {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2004, Common.ErrCode[Common.ERROR_CODE_2004]))
+		return errors.New(Common.ErrCode[Common.ERROR_CODE_2004])
+	}
+	if userId != request.Receiver_id {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_104, Common.ErrCode[Common.ERROR_CODE_104]))
+		return errors.New(Common.ErrCode[Common.ERROR_CODE_104])
+	}
+	if request.Requst_state != DB.Defualt {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2005, Common.ErrCode[Common.ERROR_CODE_2005]))
+		return errors.New(Common.ErrCode[Common.ERROR_CODE_104])
+	}
+	return nil
 }

@@ -73,3 +73,7 @@ func checkUserInfo(token string) (DB.User, error) {
 	}
 	return users[0], nil
 }
+
+func ChannelMain() {
+
+}

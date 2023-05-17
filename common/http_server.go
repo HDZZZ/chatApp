@@ -18,7 +18,8 @@ func RegisterHTTPService(excute func(gin *gin.Engine)) {
 /*
 *
 
-	该方法需要放在main中调用
+	该方法需要放在main中调用,延迟初始化, 可以对外暴露某些三方api的钩子.
+	for example, http就需要在run之前注册完所有请求,就需要对外暴露对应的在实例初始化之后run之前的钩子
 */
 func InitHTTPService() {
 

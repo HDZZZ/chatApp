@@ -5,15 +5,6 @@ import (
 	"log"
 )
 
-type DBMessage struct {
-	Msg_id            int
-	Sender_id         int
-	Receiver_id       int
-	Conversatio_type  int
-	Message_body_type int
-	Content           string
-}
-
 func PushMessage(message DBMessage) (int64, error) {
 	// var value = fmt.Sprintf("%d,%d", userName, password);
 	id, err := _exec("INSERT INTO messages(sender_id,receiver_id,conversatio_type,message_body_type,content) VALUES(?,?,?,?,?)",

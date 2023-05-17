@@ -37,7 +37,7 @@ func GetChannel(uid int) *websocket.Conn {
 	return userChannels[uid]
 }
 func GetUidByChannel(con *websocket.Conn) int {
-	uid, ok := mapkey(con)
+	uid, _ := mapkey(con)
 	return uid
 }
 

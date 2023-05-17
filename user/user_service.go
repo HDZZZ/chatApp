@@ -72,3 +72,11 @@ func (instance *AppServiceInstance) getConfigInfo(c *gin.Context) {
 		// Websocket: "ws://127.0.0.1:9002/websocket",
 	}))
 }
+
+func getUserByToken(token string) DB.User {
+	users := DB.QueryUserByToken(token)
+	if len(users) > 0 {
+		return users[0]
+	}
+	return DB.User{}
+}
