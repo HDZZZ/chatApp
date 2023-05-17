@@ -47,6 +47,16 @@ func RefuseRequest(requestId int) error {
 	return err
 }
 
+func MakeRequestState(uid_1 int, uid_2 int, state RequestState) error {
+	// var value = fmt.Sprintf("%d,%d", userName, password);
+	_, err := _exec("UPDATE request_add_friend set request_state = ? where (sender_uid=? AND receiver_uid=?) OR (sender_uid=? AND receiver_uid=?)", state, uid_1, uid_2, uid_2, uid_1)
+	if err != nil {
+		log.Fatal("UPDATE into request_add_friend error", err)
+		return err
+	}
+	return err
+}
+
 func GetAllRequestOfSomebody(uid int) []ReuqestOfAddingFriend {
 	var messages = []ReuqestOfAddingFriend{}
 	inputUser := ReuqestOfAddingFriend{}
@@ -79,6 +89,15 @@ func GetAllFriendsUid(uid int) []int {
 	return users
 }
 
+func DeleteFriend(uid int, friendUid int) error {
+	_, err := _exec("DELETE FROM friend_relation WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)", uid, friendUid, friendUid, uid)
+	if err != nil {
+		log.Fatal("DELETE friend error", err)
+		return err
+	}
+	return nil
+}
+
 func QueryRequestById(requestId int) ReuqestOfAddingFriend {
 	var messages = []ReuqestOfAddingFriend{}
 	inputUser := ReuqestOfAddingFriend{}
@@ -87,6 +106,17 @@ func QueryRequestById(requestId int) ReuqestOfAddingFriend {
 		newUser := inputUser
 		messages = append(messages, newUser)
 	}, []any{requestId}, &inputUser.Id, &inputUser.Msg, &inputUser.Sender_id, &inputUser.Receiver_id, &inputUser.Requst_state)
+	return messages[0]
+}
+
+func QueryRequestByUids(uid_1 int, uid_2 int) ReuqestOfAddingFriend {
+	var messages = []ReuqestOfAddingFriend{}
+	inputUser := ReuqestOfAddingFriend{}
+
+	_query(query_Request_By_Uids, func(a ...any) {
+		newUser := inputUser
+		messages = append(messages, newUser)
+	}, []any{uid_1, uid_2, uid_2, uid_1}, &inputUser.Id, &inputUser.Msg, &inputUser.Sender_id, &inputUser.Receiver_id, &inputUser.Requst_state)
 	return messages[0]
 }
 

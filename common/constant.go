@@ -6,6 +6,7 @@ const REQUEST_PARAMS_UID = "uid"
 const REQUEST_PARAMS_RECEIVERUID = "receiverUid"
 const REQUEST_PARAMS_REQUEST_MSG = "requestMsg"
 const REQUEST_PARAMS_REQUEST_ID = "requestId"
+const REQUEST_PARAMS_FRIEND_UID = "friendId"
 
 const REQUEST_HEADER_TOKEN = "token"
 
@@ -23,6 +24,9 @@ const ERROR_CODE_2002 = 2002
 const ERROR_CODE_2003 = 2003
 const ERROR_CODE_2004 = 2004
 const ERROR_CODE_2005 = 2005
+const ERROR_CODE_2006 = 2006
+const ERROR_CODE_2007 = 2007
+const ERROR_CODE_2008 = 2008
 
 var ErrCode = map[int]string{
 	ERROR_CODE_101:  "系统ip异常",
@@ -38,6 +42,9 @@ var ErrCode = map[int]string{
 	ERROR_CODE_2003: "拒绝失败,",
 	ERROR_CODE_2004: "没有该条请求",
 	ERROR_CODE_2005: "无法对该条请求实行该操作",
+	ERROR_CODE_2006: "你们不是好友,",
+	ERROR_CODE_2007: "请求不能重复发送",
+	ERROR_CODE_2008: "添加异常",
 }
 
 const RedisKeyUnSendMsgIds = "UnSendMsgIds"

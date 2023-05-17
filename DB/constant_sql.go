@@ -16,6 +16,10 @@ const query_Request_By_Id = `select id, msg,sender_uid,
 receiver_uid,request_state from request_add_friend 
 	where id = ?`
 
+const query_Request_By_Uids = `select id, msg,sender_uid,
+receiver_uid,request_state from request_add_friend 
+	where (sender_uid=? AND receiver_uid=?) OR (sender_uid=? AND receiver_uid=?)`
+
 const query_All_Request_By_Uid = `select id, msg,sender_uid,
 receiver_uid,request_state from request_add_friend 
 	where sender_uid = ? OR receiver_uid = ?`

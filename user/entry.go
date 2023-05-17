@@ -30,6 +30,7 @@ func initUserService(ginInstance *gin.Engine) {
 	ginInstance.GET(http_path_friend_all_request, friendService.getRequestOfAddingFriendList)
 	ginInstance.GET(http_path_friend_all, friendService.getAllFriendsInfo)
 	ginInstance.GET(http_path_friend_all_uid, friendService.getAllFriendsUid)
+	ginInstance.POST(http_path_friend_delete, friendService.deleteFriend)
 }
 
 func UserMain() {

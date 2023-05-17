@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	Common "github.com/HDDDZ/test/chatApp/common"
@@ -16,6 +17,7 @@ type FriendService interface {
 	getRequestOfAddingFriendList(c *gin.Context)
 	getAllFriendsInfo(c *gin.Context)
 	getAllFriendsUid(c *gin.Context)
+	deleteFriend(c *gin.Context)
 }
 
 type FriendServiceInstance struct {
@@ -31,6 +33,22 @@ func (instance *FriendServiceInstance) sendRequestOfAddingFriend(c *gin.Context)
 	if err != nil {
 		return
 	}
+	//防重与删了后再次添加
+	olderReuest := DB.QueryRequestByUids(user.Id, receiverUid)
+	if olderReuest != (DB.ReuqestOfAddingFriend{}) {
+		if olderReuest.Requst_state == DB.Defualt {
+			c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2007, Common.ErrCode[Common.ERROR_CODE_2007]))
+		} else {
+			err = DB.MakeRequestState(user.Id, receiverUid, DB.Defualt)
+			if err == nil {
+				c.JSON(200, Common.CreateResultDataSuccess("success"))
+			} else {
+				c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2008, Common.ErrCode[Common.ERROR_CODE_2008]))
+			}
+		}
+		return
+	}
+
 	_, err = DB.SendRequest(user.Id, receiverUid, msg)
 	if err != nil {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2001, Common.ErrCode[Common.ERROR_CODE_2001]+err.Error()))
@@ -51,6 +69,7 @@ func (instance *FriendServiceInstance) agreeRequestOfAddingFriend(c *gin.Context
 	if err != nil {
 		return
 	}
+	fmt.Println("agree,", "checkHaveOperation passed")
 	err = DB.AgreeRequest(requestID)
 	if err != nil {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2002, Common.ErrCode[Common.ERROR_CODE_2002]+err.Error()))
@@ -105,6 +124,27 @@ func (instance *FriendServiceInstance) getAllFriendsUid(c *gin.Context) {
 	}
 	users := DB.GetAllFriendsUid(user.Id)
 	c.JSON(200, Common.CreateResultDataSuccess(users))
+}
+
+func (instance *FriendServiceInstance) deleteFriend(c *gin.Context) {
+	user, err := getTokenByGin(c)
+	if err != nil {
+		return
+	}
+	friendId, err := getMustParamNumber(Common.REQUEST_PARAMS_FRIEND_UID, c)
+	if err != nil {
+		return
+	}
+	err = DB.DeleteFriend(user.Id, friendId)
+	if err != nil {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2006, Common.ErrCode[Common.ERROR_CODE_2006]+err.Error()))
+		return
+	}
+	c.JSON(200, Common.CreateResultDataSuccess("success"))
+	err = DB.MakeRequestState(user.Id, friendId, DB.NotWork)
+	if err != nil {
+		return
+	}
 }
 
 /*

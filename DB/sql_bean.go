@@ -31,4 +31,5 @@ const (
 	AlreadyAgree  RequestState = 1
 	AlreadyRefuse RequestState = 2
 	Timeout       RequestState = 3
+	NotWork       RequestState = 4
 )
