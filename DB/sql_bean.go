@@ -33,3 +33,26 @@ const (
 	Timeout       RequestState = 3
 	NotWork       RequestState = 4
 )
+
+type Group struct {
+	Gid         int
+	GroupName   string
+	OwnerId     int
+	Description string
+	MemberCount int
+}
+
+type GroupMember struct {
+	Gid      int
+	Alias    string
+	Uid      int
+	Identity MemberIdentity
+}
+type MemberIdentity int8
+
+const (
+	Member  MemberIdentity = 0
+	Owner   MemberIdentity = 1
+	Manager MemberIdentity = 2
+	NONE    MemberIdentity = 3
+)

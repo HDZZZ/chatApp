@@ -6,6 +6,7 @@ require (
 	github.com/HDDDZ/test/chatApp/channel v0.0.0
 	github.com/HDDDZ/test/chatApp/db v0.0.0
 	github.com/HDDDZ/test/chatApp/user v0.0.0
+	github.com/HDDDZ/test/chatApp/group v0.0.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/gorilla/websocket v1.5.0
 )
@@ -50,4 +51,6 @@ replace github.com/HDDDZ/test/chatApp/channel => /Users/z./project/goProject/tes
 replace github.com/HDDDZ/test/chatApp/common => /Users/z./project/goProject/test/chatApp/common
 
 replace github.com/HDDDZ/test/chatApp/user => /Users/z./project/goProject/test/chatApp/user
+
+replace github.com/HDDDZ/test/chatApp/group => /Users/z./project/goProject/test/chatApp/group
 

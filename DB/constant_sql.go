@@ -31,3 +31,19 @@ where friend_relation.user_id_1 = ? OR friend_relation.user_id_2 = ?`
 const query_All_Friends_Uid_By_Uid = `select users.uid from users
 INNER JOIN friend_relation ON (users.uid=friend_relation.user_id_1 or users.uid=friend_relation.user_id_2) and users.uid != ?
 where friend_relation.user_id_1 = ? OR friend_relation.user_id_2 = ?`
+
+const query_Group_By_Gid = `select gid, group_name,ownerId,
+ COALESCE(description, '') as description,member_count from chat_group 
+	where gid = ?`
+
+const query_Groups_By_Uid = `select chat_group.gid, group_name,ownerId,
+COALESCE(description, '') as description,member_count from chat_group JOIN group_members ON chat_group.gid = group_members.gid
+	where group_members.uid = ?`
+
+const query_GroupMembers_By_Gid = `select gid, uid,COALESCE(alias, '') as alias,
+identity from group_members where gid = ?`
+
+const query_GroupMembersUid_By_Gid = `select uid from group_members where gid = ?`
+
+const query_GroupMember = `select gid, uid,COALESCE(alias, '') as alias,
+identity from group_members where gid = ? AND uid = ?`

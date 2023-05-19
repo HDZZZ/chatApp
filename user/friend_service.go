@@ -160,6 +160,7 @@ func getTokenByGin(c *gin.Context) (DB.User, error) {
 	}
 	user := getUserByToken(tokens[0])
 	if user == (DB.User{}) {
+		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_103, Common.ErrCode[Common.ERROR_CODE_103]))
 		return DB.User{}, errors.New("get get user by token")
 	}
 	return user, nil
