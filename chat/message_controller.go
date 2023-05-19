@@ -1,4 +1,4 @@
-package channel
+package chat
 
 import (
 	"errors"
@@ -12,36 +12,68 @@ import (
 )
 
 func receiveMessage(message Channel.Message, conn *websocket.Conn) {
+	fmt.Println("receiveMessage,message=", message)
 	err := checkMessageLegal(message, conn)
 	if err != nil {
 		sendErrorMessage(err.Error(), conn)
 		conn.Close()
 		return
 	}
+	if isGroupMessage(message) {
+		err = checkGroupMessageLegal(message)
+		if err != nil {
+			sendErrorMessage(err.Error(), conn)
+			return
+		}
+	}
 	storeMessage(&message)
 	tranferToReceiver(message, conn)
 }
 
 func tranferToReceiver(message Channel.Message, conn *websocket.Conn) {
-	fmt.Println("tranferToReceiver")
+	if isGroupMessage(message) {
+		transferToGroupReciver(message)
+		return
+	}
 	userCon := Channel.GetChannel(message.ReceiverId)
 	if userCon == nil {
-		addWaitSendList(message)
+		addWaitSendList(message.ReceiverId, message)
 		return
 	}
 
 	if userCon == ((*websocket.Conn)(nil)) {
-		addWaitSendList(message)
+		addWaitSendList(message.ReceiverId, message)
 		return
 	}
 	userCon.WriteJSON(message)
 }
 
-func addWaitSendList(message Channel.Message) {
+func transferToGroupReciver(message Channel.Message) {
+	uids := DB.GetAllMembersUid(message.ReceiverId)
+	fmt.Println("transferToGroupReciver,uids=", uids)
+	for _, uid := range uids {
+		if uid == message.SenderId {
+			continue
+		}
+		userCon := Channel.GetChannel(uid)
+		if userCon == nil {
+			addWaitSendList(uid, message)
+			continue
+		}
+
+		if userCon == ((*websocket.Conn)(nil)) {
+			addWaitSendList(uid, message)
+			continue
+		}
+		userCon.WriteJSON(message)
+	}
+}
+
+func addWaitSendList(receiverUid int, message Channel.Message) {
 	//todo, 走离线时间(断开连接存储),获取消息
 	// Common.Set("uid", "sdajsfi")
 	err := Common.AppendValue(Common.RedisKeyUnSendMsgIds+
-		fmt.Sprint(message.ReceiverId), "|"+fmt.Sprint(message.MsgId))
+		fmt.Sprint(receiverUid), "|"+fmt.Sprint(message.MsgId))
 	if err != nil {
 		fmt.Println("addWaitSendList fiald", err, message)
 		return
@@ -86,6 +118,14 @@ func checkMessageLegal(message Channel.Message, conn *websocket.Conn) error {
 	return nil
 }
 
+func checkGroupMessageLegal(message Channel.Message) error {
+	member := DB.GetMemberInfo(message.ReceiverId, message.SenderId)
+	if member == (DB.GroupMember{}) {
+		return errors.New("you can't send message to this group when you are not in it")
+	}
+	return nil
+}
+
 func sendUnsendMessages(uid int) {
 	// userChannals[iAreaId]
 	value, _ := Common.Get(Common.RedisKeyUnSendMsgIds + fmt.Sprint(uid))
@@ -99,11 +139,18 @@ func sendUnsendMessages(uid int) {
 	Common.Delete(Common.RedisKeyUnSendMsgIds + fmt.Sprint(uid))
 }
 
+func isGroupMessage(message Channel.Message) bool {
+	return message.ConversationType == Channel.Group
+}
+
 func init() {
 	Common.RegisterSubscriber(Common.UserConnection, func(params ...any) {
 		for _, uid := range params {
 			iAreaId := uid.(int)
 			sendUnsendMessages(iAreaId)
 		}
+	})
+	Channel.RegisterReceiveMessageListener(func(uid int, msg Channel.Message) {
+		receiveMessage(msg, Channel.GetChannel(uid))
 	})
 }

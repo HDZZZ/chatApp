@@ -2,6 +2,7 @@ package main
 
 import (
 	Channel "github.com/HDDDZ/test/chatApp/channel"
+	Chat "github.com/HDDDZ/test/chatApp/chat"
 	Common "github.com/HDDDZ/test/chatApp/common"
 	DB "github.com/HDDDZ/test/chatApp/db"
 	Group "github.com/HDDDZ/test/chatApp/group"
@@ -14,5 +15,6 @@ func main() {
 	User.UserMain()
 	Channel.ChannelMain()
 	Group.GroupMain()
+	Chat.ChatMain()
 	defer DB.AppClosed()
 }
