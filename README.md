@@ -1,5 +1,5 @@
 # chatApp
-there is a web server application that have been go as developed tool
+there is a web server application that have been use go as developed tool
 
 # 项目计划表
 #### 登陆模块(一)
