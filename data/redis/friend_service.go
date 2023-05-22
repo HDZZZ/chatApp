@@ -2,10 +2,8 @@ package redis
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 
 	Common "github.com/HDDDZ/test/chatApp/data/common"
 )
@@ -13,25 +11,31 @@ import (
 const FRIEND_KEY = "friend_uid"
 
 const REQUEST_KEY = "request"
-const REQUEST_RID_KEY = "request_rid"
+const REQUEST_RID_KEY = "request_rid" //存储的key的 请求id
 const REQUEST_UID_KEY = "request_uid"
 
-func getRequestByUid(uid string) Common.ReuqestOfAddingFriend {
-	rid, err := get(createReidsrKey(REQUEST_UID_KEY, uid))
+func getRequestsByUid(uid string) []Common.ReuqestOfAddingFriend {
+	rids, err := get(createReidsrKey(REQUEST_UID_KEY, uid))
 	if err != nil {
-		return Common.ReuqestOfAddingFriend{}
+		return []Common.ReuqestOfAddingFriend{}
 	}
-	return getRequestByRid(rid)
+
+	return getRequestsByRids(rids)
 }
 
-func getRequestByRid(rid string) Common.ReuqestOfAddingFriend {
-	user, err := get(createReidsrKey(REQUEST_RID_KEY, rid))
-	if err != nil {
-		return Common.ReuqestOfAddingFriend{}
+func getRequestsByRids(rids ...string) []Common.ReuqestOfAddingFriend {
+	for index, rid := range rids {
+		rids[index] = createReidsrKey(REQUEST_RID_KEY, rid)
 	}
+
+	requestStreams, _ := mget(rids...)
+	requests := make([]Common.ReuqestOfAddingFriend, len(requestStreams))
 	var newUser Common.ReuqestOfAddingFriend
-	json.Unmarshal([]byte(user), &newUser)
-	return newUser
+	for index, stream := range requestStreams {
+		json.Unmarshal([]byte(stream.(string)), &newUser)
+		requests[index] = newUser
+	}
+	return requests
 }
 
 /*
@@ -107,13 +111,8 @@ func checkRequestsExist(requests []Common.ReuqestOfAddingFriend) []bool {
 *
 */
 func getFriendsUidByUid(uid int) ([]string, error) {
-	friendsUid, _ := get(createReidsrKey(FRIEND_KEY, uid))
-	if friendsUid == "" {
-		return []string{}, errors.New("don't have")
-	}
-
-	uids := removenullvalue(strings.Split(friendsUid, "|"))
-	return uids, nil
+	friendsUid, err := LRange(createReidsrKey(FRIEND_KEY, uid))
+	return friendsUid, err
 }
 
 /*
@@ -122,7 +121,7 @@ func getFriendsUidByUid(uid int) ([]string, error) {
 *
 */
 func updateFriendsUidByUid(uid int, friendsUid []int) error {
-	err := set(createReidsrKey(FRIEND_KEY, uid), friendsUid)
+	err := RPush(createReidsrKey(FRIEND_KEY, uid), friendsUid)
 	return err
 }
 
@@ -134,4 +133,12 @@ func removenullvalue[T string | int](slice []T) []T {
 		}
 	}
 	return output //slice with no nil-values
+}
+
+func Map[T, U any](ts []T, f func(T) U) []U {
+	us := make([]U, len(ts))
+	for i := range ts {
+		us[i] = f(ts[i])
+	}
+	return us
 }

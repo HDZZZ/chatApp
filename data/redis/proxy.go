@@ -9,130 +9,108 @@ type RedisService struct {
 
 type UserRedisService interface {
 	GetUserByToken(token string) Common.User
-	GetUserByUid(uid int) Common.User
-	AddUserList(requests []Common.User) error
+	GetUserByUid(uid string) Common.User
+	AddUserList(requests ...Common.User) error
 }
 
 type FriendRedisService interface {
-	UpdateRequest(requestId int) error
-	AddRequestList(requests Common.ReuqestOfAddingFriend) error
-	GetAllRequests(uid int) []Common.ReuqestOfAddingFriend
-	GetAllFriends(uid int) []Common.User
-	GetAllFriendsUid(uid int) []int
-	DeleteFriend(uid int, friendUid int) error
-	AddFriends(uid int, friendUids []int)
-	QueryRequestById(uid int) Common.ReuqestOfAddingFriend
-	QueryRequestByUids(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend
+	GetRequestsByUid(uid string) []Common.ReuqestOfAddingFriend
+	GetRequestsByRid(rid string) []Common.ReuqestOfAddingFriend
+	RefreshRequests(requests ...Common.ReuqestOfAddingFriend) error
+	SpecifyUserRefreshRequests(uid string, requests []Common.ReuqestOfAddingFriend) error
+	CheckRequestsExist(requests []Common.ReuqestOfAddingFriend) []bool
+	GetFriendsUidByUid(uid int) ([]string, error)
+	UpdateFriendsUidByUid(uid int, friendsUid []int) error
 }
 
 type GroupRedisService interface {
-	UpdateGroupInfo(group Common.Group) error
-	GetGroupByGid(gid int) Common.Group
-	GetAllGroupsByUid(uid int) []Common.Group
-	AddGroups(group []Common.Group) error
-	AddMembers(members []Common.GroupMember) error
-	RemoveMembers(gid int, uids ...int) error
-	GetAllMembersInfo(gid int) []Common.GroupMember
-	GetAllMembersUid(gid int) []int
-	GetMemberInfo(gid int, uid int) Common.GroupMember
+	RefreshGroups(groups ...Common.Group) error
+	GetGroupByGid(gid string) Common.Group
+	AddGroupMembers(gid string, members ...Common.GroupMember) error
+	RefreshGroupAllMembers(gid string, members ...Common.GroupMember) error
+	RemoveGroupMembers(gid string, members ...Common.GroupMember) error
+	UpdateGroupMemberInfo(members ...Common.GroupMember) error
+	GetMember(gid string, uid string) Common.GroupMember
+	GetAllMembers(gid string) []Common.GroupMember
 }
 
 type MsgRedisService interface {
-	PushMessages(message []Common.DBMessage) error
-	PushWaitMessages(message []Common.DBMessage) error
-	GetWaitMessages(uid int) []Common.DBMessage
-	QueryMessagesByMsgIds(msgIds string) []Common.DBMessage
+	PushMessages(msgs ...Common.DBMessage) error
+	PushMsgIdToWaitList(uid string, msgId int) error
+	ClearWaitListOfSomebody(uid string) error
+	GetAllWaitMsgIdOfSomeBody(uid string) []string
+	GetMessageFromMsgID(uid string) Common.DBMessage
 }
 
 func (service *RedisService) GetUserByToken(token string) Common.User {
-	panic("not implement")
+	return getUserByToken(token)
 }
 
-func (service *RedisService) GetUserByUid(uid int) Common.User {
-	panic("not implement")
+func (service *RedisService) GetUserByUid(uid string) Common.User {
+	return getUserByUid(uid)
 
 }
-func (service *RedisService) AddUserList(users []Common.User) error {
-	panic("not implement")
-
+func (service *RedisService) AddUserList(users ...Common.User) error {
+	return addUsers(users)
 }
-func (service *RedisService) UpdateRequest(requestId int) error {
-	panic("not implement")
 
+func (service *RedisService) GetRequestsByUid(uid string) []Common.ReuqestOfAddingFriend {
+	return getRequestsByUid(uid)
 }
-func (service *RedisService) AddRequestList(requests Common.ReuqestOfAddingFriend) error {
-	panic("not implement")
-
+func (service *RedisService) GetRequestsByRid(rid string) []Common.ReuqestOfAddingFriend {
+	return getRequestsByRids(rid)
 }
-func (service *RedisService) GetAllRequests(uid int) []Common.ReuqestOfAddingFriend {
-	panic("not implement")
-
+func (service *RedisService) RefreshRequests(requests ...Common.ReuqestOfAddingFriend) error {
+	return refreshRequests(requests)
 }
-func (service *RedisService) GetAllFriends(uid int) []Common.User {
-	panic("not implement")
-
+func (service *RedisService) SpecifyUserRefreshRequests(uid string, requests []Common.ReuqestOfAddingFriend) error {
+	return specifyUserRefreshRequests(uid, requests)
 }
-func (service *RedisService) GetAllFriendsUid(uid int) []int {
-	panic("not implement")
-
+func (service *RedisService) CheckRequestsExist(requests []Common.ReuqestOfAddingFriend) []bool {
+	return checkRequestsExist(requests)
 }
-func (service *RedisService) DeleteFriend(uid int, friendUid int) error {
-	panic("not implement")
-
+func (service *RedisService) GetFriendsUidByUid(uid int) ([]string, error) {
+	return getFriendsUidByUid(uid)
 }
-func (service *RedisService) AddFriends(uid int, friendUids []int) {
-	panic("not implement")
-
+func (service *RedisService) UpdateFriendsUidByUid(uid int, friendsUid []int) error {
+	return updateFriendsUidByUid(uid, friendsUid)
 }
-func (service *RedisService) QueryRequestById(uid int) Common.ReuqestOfAddingFriend {
-	panic("not implement")
-
+func (service *RedisService) RefreshGroups(groups ...Common.Group) error {
+	return refreshGroups(groups...)
 }
-func (service *RedisService) QueryRequestByUids(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend {
-	panic("not implement")
-
+func (service *RedisService) GetGroupByGid(gid string) Common.Group {
+	return getGroupByGid(gid)
 }
-func (service *RedisService) UpdateGroupInfo(group Common.Group) error {
-	panic("not implement")
-
+func (service *RedisService) AddGroupMembers(gid string, members ...Common.GroupMember) error {
+	return addGroupMembers(gid, members...)
 }
-func (service *RedisService) GetGroupByGid(gid int) Common.Group {
-	panic("not implement")
-
+func (service *RedisService) RefreshGroupAllMembers(gid string, members ...Common.GroupMember) error {
+	return refreshGroupAllMembers(gid, members...)
 }
-func (service *RedisService) GetAllGroupsByUid(uid int) []Common.Group {
-	panic("not implement")
-
+func (service *RedisService) RemoveGroupMembers(gid string, members ...Common.GroupMember) error {
+	return removeGroupMembers(gid, members...)
 }
-func (service *RedisService) AddGroups(group []Common.Group) error {
-	panic("not implement")
-
+func (service *RedisService) UpdateGroupMemberInfo(members ...Common.GroupMember) error {
+	return updateGroupMemberInfo(members...)
 }
-func (service *RedisService) AddMembers(members []Common.GroupMember) error {
-	panic("not implement")
-
+func (service *RedisService) GetMember(gid string, uid string) Common.GroupMember {
+	return getMember(gid, uid)
 }
-func (service *RedisService) RemoveMembers(gid int, uids ...int) error {
-	panic("not implement")
-
+func (service *RedisService) GetAllMembers(gid string) []Common.GroupMember {
+	return getAllMembers(gid)
 }
-func (service *RedisService) GetAllMembersInfo(gid int) []Common.GroupMember {
-	panic("not implement")
-
+func (service *RedisService) PushMessages(msgs ...Common.DBMessage) error {
+	return pushMessages(msgs...)
 }
-func (service *RedisService) GetAllMembersUid(gid int) []int {
-	panic("not implement")
-
+func (service *RedisService) PushMsgIdToWaitList(uid string, msgId int) error {
+	return pushMsgIdToWaitList(uid, msgId)
 }
-func (service *RedisService) GetMemberInfo(gid int, uid int) Common.GroupMember {
-	panic("not implement")
-
+func (service *RedisService) ClearWaitListOfSomebody(uid string) error {
+	return clearWaitListOfSomebody(uid)
 }
-func (service *RedisService) PushMessages(message []Common.DBMessage) (int64, error) {
-	panic("not implement")
-
+func (service *RedisService) GetAllWaitMsgIdOfSomeBody(uid string) []string {
+	return getAllWaitMsgIdOfSomeBody(uid)
 }
-func (service *RedisService) QueryMessagesByMsgIds(msgIds string) []Common.DBMessage {
-	panic("not implement")
-
+func (service *RedisService) GetMessageFromMsgID(uid string) Common.DBMessage {
+	return getMessageFromMsgID(uid)
 }

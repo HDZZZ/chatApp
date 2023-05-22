@@ -10,6 +10,7 @@ type SQLService struct {
 type UserSQLService interface {
 	GetUserByToken(token string) Common.User
 	GetUserByUid(uid int) Common.User
+	GetUserByUids(uids string) []Common.User
 	GetUserByUsername(username string) []Common.User
 	AddUser(username string, pwd string, token string) (Common.User, error)
 }
@@ -63,6 +64,13 @@ func (service *SQLService) GetUserByUid(uid int) Common.User {
 		return Common.User{}
 	}
 	return users[0]
+}
+func (service *SQLService) GetUserByUids(uids string) []Common.User {
+	users := _queryUserByAny("users.uid", uids)
+	if len(users) == 0 {
+		return []Common.User{}
+	}
+	return users
 }
 
 func (service *SQLService) GetUserByUsername(username string) []Common.User {

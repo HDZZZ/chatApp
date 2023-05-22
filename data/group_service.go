@@ -1,14 +1,20 @@
 package data
 
 import (
+	"fmt"
+
 	Common "github.com/HDDDZ/test/chatApp/data/common"
+	Redis "github.com/HDDDZ/test/chatApp/data/redis"
 	DB "github.com/HDDDZ/test/chatApp/data/sql"
 )
 
 var groupDBService DB.GroupSQLService = &DB.SQLService{}
+var groupRedisService Redis.GroupRedisService = &Redis.RedisService{}
 
 func Create(ownerUid int, groupName string, memberUids ...int) (int64, error) {
-	return groupDBService.Create(ownerUid, groupName, memberUids...)
+	gid, err := groupDBService.Create(ownerUid, groupName, memberUids...)
+	go synchroniseGroupAndMembersInfo(int(gid))
+	return
 }
 
 func TransferOwner(gid int, newOwnerId int, OlderOwnerId int) error {
@@ -54,4 +60,14 @@ func GetMemberInfo(gid int, uid int) Common.GroupMember {
 
 func UpdateMemberInfo(gid int, uid int, alias string, identity Common.MemberIdentity) error {
 	return groupDBService.UpdateMemberInfo(gid, uid, alias, identity)
+}
+
+func synchroniseGroupAndMembersInfo(gid int) {
+	GetGroupByGid(gid)
+	synchroniseGroupMembersInfo(gid)
+}
+
+func synchroniseGroupMembersInfo(gid int) {
+	members := groupDBService.GetAllMembersInfo(gid)
+	groupRedisService.AddGroupMembers(fmt.Sprint(gid), members...)
 }

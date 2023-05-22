@@ -4,13 +4,20 @@ type EventType int8
 
 const (
 	UserConnection EventType = 0
+	AppClose       EventType = 1
 )
 
-var eventSubscribers = [1][]func(params ...any){}
+var eventSubscribers = [2][]func(params ...any){}
 
 func CallUserConnectionSubscribers(uid int) {
 	for _, callBack := range eventSubscribers[UserConnection] {
 		callBack(uid)
+	}
+}
+
+func CallAppCloseSubscribers() {
+	for _, callBack := range eventSubscribers[AppClose] {
+		callBack()
 	}
 }
 

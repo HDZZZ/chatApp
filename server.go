@@ -16,5 +16,5 @@ func main() {
 	Channel.ChannelMain()
 	Group.GroupMain()
 	Chat.ChatMain()
-	defer DB.AppClosed()
+	defer Common.CallAppCloseSubscribers()
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	AppCommon "github.com/HDDDZ/test/chatApp/common"
 	Common "github.com/HDDDZ/test/chatApp/data/common"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -21,6 +22,10 @@ func init() {
 		log.Fatal(err)
 	}
 	db = dbc
+
+	AppCommon.RegisterSubscriber(AppCommon.AppClose, func(params ...any) {
+		appClosed()
+	})
 }
 
 func queryUserByToken(token string) []Common.User {
@@ -119,6 +124,6 @@ func _query(sqlQuery string, call func(...any), args []any, queryValue ...any) {
 	}
 }
 
-func AppClosed() {
+func appClosed() {
 	db.Close()
 }

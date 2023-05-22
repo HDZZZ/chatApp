@@ -38,6 +38,15 @@ func mget(key ...string) ([]interface{}, error) {
 	return rdb.MGet(key...).Result()
 }
 
+func RPush(key string, value ...interface{}) error {
+	return rdb.RPush(key, value).Err()
+}
+
+func LRange(key string) ([]string, error) {
+	resut, err := rdb.LRange(key, 0, -1).Result()
+	return resut, err
+}
+
 func exists(key ...string) (int64, error) {
 	return rdb.Exists(key...).Result()
 }
