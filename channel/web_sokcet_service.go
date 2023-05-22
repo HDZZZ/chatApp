@@ -2,13 +2,13 @@ package channel
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
 	Common "github.com/HDDDZ/test/chatApp/common"
-	DB "github.com/HDDDZ/test/chatApp/db"
+	DB "github.com/HDDDZ/test/chatApp/data"
+	DBCommon "github.com/HDDDZ/test/chatApp/data/common"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -66,12 +66,9 @@ func createNewConnection(conn *websocket.Conn) {
 	}
 }
 
-func checkUserInfo(token string) (DB.User, error) {
+func checkUserInfo(token string) (DBCommon.User, error) {
 	users := DB.QueryUserByToken(token)
-	if len(users) == 0 {
-		return DB.User{}, errors.New("user token verify error")
-	}
-	return users[0], nil
+	return users, nil
 }
 
 func ChannelMain() {

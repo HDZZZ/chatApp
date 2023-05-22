@@ -2,7 +2,8 @@ package group
 
 import (
 	Common "github.com/HDDDZ/test/chatApp/common"
-	DB "github.com/HDDDZ/test/chatApp/db"
+	DB "github.com/HDDDZ/test/chatApp/data"
+	DBCommon "github.com/HDDDZ/test/chatApp/data/common"
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,7 +54,7 @@ func (instance *GroupMemberServiceInstance) removeMember(c *gin.Context) {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_102, Common.ErrCode[Common.ERROR_CODE_102]))
 		return
 	}
-	if !checkOperationPermission(user.Id, gid, DB.Owner) {
+	if !checkOperationPermission(user.Id, gid, DBCommon.Owner) {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_104, Common.ErrCode[Common.ERROR_CODE_104]))
 		return
 	}
@@ -119,7 +120,7 @@ func (instance *GroupMemberServiceInstance) updateMyInfoInGroup(c *gin.Context) 
 	if err != nil {
 		return
 	}
-	err = DB.UpdateMemberInfo(gid, user.Id, alias, DB.NONE)
+	err = DB.UpdateMemberInfo(gid, user.Id, alias, DBCommon.NONE)
 	if err != nil {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_3008, Common.ErrCode[Common.ERROR_CODE_3008]+err.Error()))
 		return

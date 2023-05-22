@@ -4,7 +4,7 @@ import (
 	Channel "github.com/HDDDZ/test/chatApp/channel"
 	Chat "github.com/HDDDZ/test/chatApp/chat"
 	Common "github.com/HDDDZ/test/chatApp/common"
-	DB "github.com/HDDDZ/test/chatApp/db"
+	DB "github.com/HDDDZ/test/chatApp/data/sql"
 	Group "github.com/HDDDZ/test/chatApp/group"
 	User "github.com/HDDDZ/test/chatApp/user"
 )

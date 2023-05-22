@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strconv"
 
+	DBCommon "github.com/HDDDZ/test/chatApp/data/common"
+
 	Common "github.com/HDDDZ/test/chatApp/common"
-	DB "github.com/HDDDZ/test/chatApp/db"
+	DB "github.com/HDDDZ/test/chatApp/data"
 	"github.com/gin-gonic/gin"
 )
 
@@ -73,10 +75,8 @@ func (instance *AppServiceInstance) getConfigInfo(c *gin.Context) {
 	}))
 }
 
-func getUserByToken(token string) DB.User {
+func getUserByToken(token string) DBCommon.User {
 	users := DB.QueryUserByToken(token)
-	if len(users) > 0 {
-		return users[0]
-	}
-	return DB.User{}
+
+	return users
 }

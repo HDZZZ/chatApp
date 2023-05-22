@@ -2,10 +2,11 @@ package db
 
 import (
 	"errors"
+	Common "github.com/HDDDZ/test/chatApp/data/common"
 	"log"
 )
 
-func SendRequest(sendUid int, receiverUid int, msg string) (int64, error) {
+func sendRequest(sendUid int, receiverUid int, msg string) (int64, error) {
 	// var value = fmt.Sprintf("%d,%d", userName, password);
 	id, err := _exec("INSERT INTO request_add_friend(msg,sender_uid,receiver_uid) VALUES(?,?,?)",
 		msg, sendUid, receiverUid)
@@ -16,16 +17,16 @@ func SendRequest(sendUid int, receiverUid int, msg string) (int64, error) {
 	return id, err
 }
 
-func AgreeRequest(requestId int) error {
+func agreeRequest(requestId int) error {
 	// var value = fmt.Sprintf("%d,%d", userName, password);
-	_, err := _exec("UPDATE request_add_friend set request_state = ? where id=?", AlreadyAgree, requestId)
+	_, err := _exec("UPDATE request_add_friend set request_state = ? where id=?", Common.AlreadyAgree, requestId)
 	if err != nil {
 		log.Fatal("insert into request_add_friend error", err)
 		return err
 	}
 
-	request := QueryRequestById(requestId)
-	if request == (ReuqestOfAddingFriend{}) {
+	request := queryRequestById(requestId)
+	if request == (Common.ReuqestOfAddingFriend{}) {
 		return errors.New("无此请求")
 	}
 
@@ -37,9 +38,9 @@ func AgreeRequest(requestId int) error {
 	return err
 }
 
-func RefuseRequest(requestId int) error {
+func refuseRequest(requestId int) error {
 	// var value = fmt.Sprintf("%d,%d", userName, password);
-	_, err := _exec("UPDATE request_add_friend set request_state = ? where id=?", AlreadyRefuse, requestId)
+	_, err := _exec("UPDATE request_add_friend set request_state = ? where id=?", Common.AlreadyRefuse, requestId)
 	if err != nil {
 		log.Fatal("insert into request_add_friend error", err)
 		return err
@@ -47,7 +48,7 @@ func RefuseRequest(requestId int) error {
 	return err
 }
 
-func MakeRequestState(uid_1 int, uid_2 int, state RequestState) error {
+func makeRequestState(uid_1 int, uid_2 int, state Common.RequestState) error {
 	// var value = fmt.Sprintf("%d,%d", userName, password);
 	_, err := _exec("UPDATE request_add_friend set request_state = ? where (sender_uid=? AND receiver_uid=?) OR (sender_uid=? AND receiver_uid=?)", state, uid_1, uid_2, uid_2, uid_1)
 	if err != nil {
@@ -57,9 +58,9 @@ func MakeRequestState(uid_1 int, uid_2 int, state RequestState) error {
 	return err
 }
 
-func GetAllRequestOfSomebody(uid int) []ReuqestOfAddingFriend {
-	var messages = []ReuqestOfAddingFriend{}
-	inputUser := ReuqestOfAddingFriend{}
+func getAllRequestOfSomebody(uid int) []Common.ReuqestOfAddingFriend {
+	var messages = []Common.ReuqestOfAddingFriend{}
+	inputUser := Common.ReuqestOfAddingFriend{}
 
 	_query(query_All_Request_By_Uid, func(a ...any) {
 		newUser := inputUser
@@ -68,9 +69,9 @@ func GetAllRequestOfSomebody(uid int) []ReuqestOfAddingFriend {
 	return messages
 }
 
-func GetAllFriends(uid int) []User {
-	var users = []User{}
-	user := User{}
+func getAllFriends(uid int) []Common.User {
+	var users = []Common.User{}
+	user := Common.User{}
 
 	_query(query_All_Friends_By_Uid, func(a ...any) {
 		user := user
@@ -79,7 +80,7 @@ func GetAllFriends(uid int) []User {
 	return users
 }
 
-func GetAllFriendsUid(uid int) []int {
+func getAllFriendsUid(uid int) []int {
 	var users = []int{}
 	var friendUid int
 
@@ -89,7 +90,7 @@ func GetAllFriendsUid(uid int) []int {
 	return users
 }
 
-func DeleteFriend(uid int, friendUid int) error {
+func deleteFriend(uid int, friendUid int) error {
 	_, err := _exec("DELETE FROM friend_relation WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)", uid, friendUid, friendUid, uid)
 	if err != nil {
 		log.Fatal("DELETE friend error", err)
@@ -98,9 +99,9 @@ func DeleteFriend(uid int, friendUid int) error {
 	return nil
 }
 
-func QueryRequestById(requestId int) ReuqestOfAddingFriend {
-	var messages = []ReuqestOfAddingFriend{}
-	inputUser := ReuqestOfAddingFriend{}
+func queryRequestById(requestId int) Common.ReuqestOfAddingFriend {
+	var messages = []Common.ReuqestOfAddingFriend{}
+	inputUser := Common.ReuqestOfAddingFriend{}
 
 	_query(query_Request_By_Id, func(a ...any) {
 		newUser := inputUser
@@ -109,9 +110,9 @@ func QueryRequestById(requestId int) ReuqestOfAddingFriend {
 	return messages[0]
 }
 
-func QueryRequestByUids(uid_1 int, uid_2 int) ReuqestOfAddingFriend {
-	var messages = []ReuqestOfAddingFriend{}
-	inputUser := ReuqestOfAddingFriend{}
+func queryRequestByUids(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend {
+	var messages = []Common.ReuqestOfAddingFriend{}
+	inputUser := Common.ReuqestOfAddingFriend{}
 
 	_query(query_Request_By_Uids, func(a ...any) {
 		newUser := inputUser

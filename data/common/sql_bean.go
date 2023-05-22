@@ -1,4 +1,4 @@
-package db
+package common
 
 type User struct {
 	Id       int

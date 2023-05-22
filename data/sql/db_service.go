@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	Util "github.com/HDDDZ/test/chatApp/util"
+	Common "github.com/HDDDZ/test/chatApp/data/common"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -23,15 +23,15 @@ func init() {
 	db = dbc
 }
 
-func QueryUserByToken(token string) []User {
+func queryUserByToken(token string) []Common.User {
 	return _queryUserByAny("users_token.token", token)
 }
 
-func QueryUserByUserName(userName string) []User {
+func queryUserByUserName(userName string) []Common.User {
 	return _queryUserByAny("users.user_name", userName)
 }
 
-func queryUserByUserNameAndPwd(userName string, passwrod string) (User, error) {
+func queryUserByUserNameAndPwd(userName string, passwrod string) (Common.User, error) {
 	users := _queryUserByAny("users.user_name", userName)
 	var getByUserName bool
 	for _, user := range users {
@@ -46,12 +46,12 @@ func queryUserByUserNameAndPwd(userName string, passwrod string) (User, error) {
 	} else {
 		errorCode = 102
 	}
-	return User{}, errors.New(string(errorCode))
+	return Common.User{}, errors.New(string(errorCode))
 }
 
-func _queryUserByAny(queryKey string, value ...any) []User {
-	var user = []User{}
-	inputUser := User{}
+func _queryUserByAny(queryKey string, value ...any) []Common.User {
+	var user = []Common.User{}
+	inputUser := Common.User{}
 	_query(fmt.Sprintf(query_User_By_Users, queryKey), func(a ...any) {
 		newUser := inputUser
 		user = append(user, newUser)
@@ -59,17 +59,17 @@ func _queryUserByAny(queryKey string, value ...any) []User {
 	return user
 }
 
-func AddUser(userName string, password string) (User, error) {
+func addUser(userName string, password string, token string) (Common.User, error) {
 	// var value = fmt.Sprintf("%d,%d", userName, password);
 	id, err := _exec("INSERT INTO users(user_name,pass_word) VALUES(?,?)", userName, password)
 	if err != nil {
 		log.Fatal("insert into users error", err)
-		return User{}, err
+		return Common.User{}, err
 	}
-	_, err = _exec("INSERT INTO users_token(token,uid) VALUES(?,?)", Util.GenerateSecureToken(32), id)
+	_, err = _exec("INSERT INTO users_token(token,uid) VALUES(?,?)", token, id)
 	if err != nil {
 		log.Fatal("insert into users_token error", err)
-		return User{}, err
+		return Common.User{}, err
 	}
 	users := _queryUserByAny("users.uid", id)
 	return users[0], err
@@ -81,6 +81,18 @@ func _exec(query string, args ...any) (lastId int64, err error) {
 		log.Fatal(err)
 	}
 	lastId, err = res.LastInsertId()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
+func _delete(query string, args ...any) (count int64, err error) {
+	res, err := db.Exec(query, args...)
+	if err != nil {
+		log.Fatal(err)
+	}
+	count, err = res.RowsAffected()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -33,11 +33,11 @@ INNER JOIN friend_relation ON (users.uid=friend_relation.user_id_1 or users.uid=
 where friend_relation.user_id_1 = ? OR friend_relation.user_id_2 = ?`
 
 const query_Group_By_Gid = `select gid, group_name,ownerId,
- COALESCE(description, '') as description,member_count from chat_group 
+ COALESCE(description, '') as description from chat_group 
 	where gid = ?`
 
 const query_Groups_By_Uid = `select chat_group.gid, group_name,ownerId,
-COALESCE(description, '') as description,member_count from chat_group JOIN group_members ON chat_group.gid = group_members.gid
+COALESCE(description, '') as description from chat_group JOIN group_members ON chat_group.gid = group_members.gid
 	where group_members.uid = ?`
 
 const query_GroupMembers_By_Gid = `select gid, uid,COALESCE(alias, '') as alias,

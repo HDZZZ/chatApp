@@ -3,10 +3,11 @@ package user
 import (
 	"errors"
 	"fmt"
+	DBCommon "github.com/HDDDZ/test/chatApp/data/common"
 	"strconv"
 
 	Common "github.com/HDDDZ/test/chatApp/common"
-	DB "github.com/HDDDZ/test/chatApp/db"
+	DB "github.com/HDDDZ/test/chatApp/data"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,11 +36,11 @@ func (instance *FriendServiceInstance) sendRequestOfAddingFriend(c *gin.Context)
 	}
 	//防重与删了后再次添加
 	olderReuest := DB.QueryRequestByUids(user.Id, receiverUid)
-	if olderReuest != (DB.ReuqestOfAddingFriend{}) {
-		if olderReuest.Requst_state == DB.Defualt {
+	if olderReuest != (DBCommon.ReuqestOfAddingFriend{}) {
+		if olderReuest.Requst_state == DBCommon.Defualt {
 			c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2007, Common.ErrCode[Common.ERROR_CODE_2007]))
 		} else {
-			err = DB.MakeRequestState(user.Id, receiverUid, DB.Defualt)
+			err = DB.MakeRequestState(user.Id, receiverUid, DBCommon.Defualt)
 			if err == nil {
 				c.JSON(200, Common.CreateResultDataSuccess("success"))
 			} else {
@@ -141,7 +142,7 @@ func (instance *FriendServiceInstance) deleteFriend(c *gin.Context) {
 		return
 	}
 	c.JSON(200, Common.CreateResultDataSuccess("success"))
-	err = DB.MakeRequestState(user.Id, friendId, DB.NotWork)
+	err = DB.MakeRequestState(user.Id, friendId, DBCommon.NotWork)
 	if err != nil {
 		return
 	}
@@ -152,16 +153,16 @@ func (instance *FriendServiceInstance) deleteFriend(c *gin.Context) {
 
 	通过gin.contxt获取用户, 完全处理token, 如果异常会直接调用c.json
 */
-func getTokenByGin(c *gin.Context) (DB.User, error) {
+func getTokenByGin(c *gin.Context) (DBCommon.User, error) {
 	tokens := c.Request.Header["Token"]
 	if len(tokens) == 0 {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_103, Common.ErrCode[Common.ERROR_CODE_103]))
-		return DB.User{}, errors.New("have no token")
+		return DBCommon.User{}, errors.New("have no token")
 	}
 	user := getUserByToken(tokens[0])
-	if user == (DB.User{}) {
+	if user == (DBCommon.User{}) {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_103, Common.ErrCode[Common.ERROR_CODE_103]))
-		return DB.User{}, errors.New("get get user by token")
+		return DBCommon.User{}, errors.New("get get user by token")
 	}
 	return user, nil
 }
@@ -184,7 +185,7 @@ func getMustParamNumber(paramKey string, c *gin.Context) (int, error) {
 */
 func checkHaveOperation(requestID int, userId int, c *gin.Context) error {
 	request := DB.QueryRequestById(requestID)
-	if request == (DB.ReuqestOfAddingFriend{}) {
+	if request == (DBCommon.ReuqestOfAddingFriend{}) {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2004, Common.ErrCode[Common.ERROR_CODE_2004]))
 		return errors.New(Common.ErrCode[Common.ERROR_CODE_2004])
 	}
@@ -192,7 +193,7 @@ func checkHaveOperation(requestID int, userId int, c *gin.Context) error {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_104, Common.ErrCode[Common.ERROR_CODE_104]))
 		return errors.New(Common.ErrCode[Common.ERROR_CODE_104])
 	}
-	if request.Requst_state != DB.Defualt {
+	if request.Requst_state != DBCommon.Defualt {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_2005, Common.ErrCode[Common.ERROR_CODE_2005]))
 		return errors.New(Common.ErrCode[Common.ERROR_CODE_104])
 	}

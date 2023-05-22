@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/HDDDZ/test/chatApp/channel v0.0.0
-	github.com/HDDDZ/test/chatApp/db v0.0.0
+	github.com/HDDDZ/test/chatApp/data v0.0.0
 	github.com/HDDDZ/test/chatApp/user v0.0.0
 	github.com/HDDDZ/test/chatApp/group v0.0.0
 	github.com/HDDDZ/test/chatApp/chat v0.0.0
@@ -43,7 +43,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/HDDDZ/test/chatApp/db => /Users/z./project/goProject/test/chatApp/db
+replace github.com/HDDDZ/test/chatApp/data => /Users/z./project/goProject/test/chatApp/data
 
 replace github.com/HDDDZ/test/chatApp/util => /Users/z./project/goProject/test/chatApp/util
 

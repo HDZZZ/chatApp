@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"strings"
 
+	DBCommon "github.com/HDDDZ/test/chatApp/data/common"
+
 	Common "github.com/HDDDZ/test/chatApp/common"
-	DB "github.com/HDDDZ/test/chatApp/db"
+	DB "github.com/HDDDZ/test/chatApp/data"
 	"github.com/gin-gonic/gin"
 )
 
@@ -50,7 +52,7 @@ func (instance *GroupServiceInstance) tranferOwner(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if checkOperationPermission(user.Id, gid, DB.Owner) {
+	if checkOperationPermission(user.Id, gid, DBCommon.Owner) {
 		err = DB.TransferOwner(gid, newOWnerId, user.Id)
 		if err != nil {
 			c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_3001, Common.ErrCode[Common.ERROR_CODE_3001]+err.Error()))
@@ -100,7 +102,7 @@ func (instance *GroupServiceInstance) updateGroupInfo(c *gin.Context) {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_3004, Common.ErrCode[Common.ERROR_CODE_3004]))
 		return
 	}
-	if checkOperationPermission(user.Id, gid, DB.Owner) {
+	if checkOperationPermission(user.Id, gid, DBCommon.Owner) {
 		err = DB.UpdateGroupInfo(gid, groupName, description)
 		if err != nil {
 			c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_3005, Common.ErrCode[Common.ERROR_CODE_3005]+err.Error()))
@@ -123,7 +125,7 @@ func (instance *GroupServiceInstance) getGroupInfoByGid(c *gin.Context) {
 		return
 	}
 	group := DB.GetGroupByGid(gid)
-	if group == (DB.Group{}) {
+	if group == (DBCommon.Group{}) {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_3006, Common.ErrCode[Common.ERROR_CODE_3006]))
 		return
 	}
@@ -144,32 +146,30 @@ func (instance *GroupServiceInstance) getAllGroupsMeIn(c *gin.Context) {
 
 	通过gin.contxt获取用户, 完全处理token, 如果异常会直接调用c.json
 */
-func getTokenByGin(c *gin.Context) (DB.User, error) {
+func getTokenByGin(c *gin.Context) (DBCommon.User, error) {
 	tokens := c.Request.Header["Token"]
 	if len(tokens) == 0 {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_103, Common.ErrCode[Common.ERROR_CODE_103]))
-		return DB.User{}, errors.New("have no token")
+		return DBCommon.User{}, errors.New("have no token")
 	}
 
 	user := getUserByToken(tokens[0])
-	if user == (DB.User{}) {
+	if user == (DBCommon.User{}) {
 		c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_103, Common.ErrCode[Common.ERROR_CODE_103]))
-		return DB.User{}, errors.New("get get user by token")
+		return DBCommon.User{}, errors.New("get get user by token")
 	}
 	return user, nil
 }
 
-func checkOperationPermission(uid, gid int, memberIdentity DB.MemberIdentity) bool {
+func checkOperationPermission(uid, gid int, memberIdentity DBCommon.MemberIdentity) bool {
 	group := DB.GetMemberInfo(gid, uid)
 	return group.Identity == memberIdentity
 }
 
-func getUserByToken(token string) DB.User {
+func getUserByToken(token string) DBCommon.User {
 	users := DB.QueryUserByToken(token)
-	if len(users) > 0 {
-		return users[0]
-	}
-	return DB.User{}
+
+	return users
 }
 
 /*

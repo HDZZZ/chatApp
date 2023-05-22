@@ -3,12 +3,12 @@ package chat
 import (
 	"errors"
 	"fmt"
-	"math/rand"
-
 	Channel "github.com/HDDDZ/test/chatApp/channel"
 	Common "github.com/HDDDZ/test/chatApp/common"
-	DB "github.com/HDDDZ/test/chatApp/db"
+	DB "github.com/HDDDZ/test/chatApp/data"
+	DBCommon "github.com/HDDDZ/test/chatApp/data/common"
 	"github.com/gorilla/websocket"
+	"math/rand"
 )
 
 func receiveMessage(message Channel.Message, conn *websocket.Conn) {
@@ -120,7 +120,7 @@ func checkMessageLegal(message Channel.Message, conn *websocket.Conn) error {
 
 func checkGroupMessageLegal(message Channel.Message) error {
 	member := DB.GetMemberInfo(message.ReceiverId, message.SenderId)
-	if member == (DB.GroupMember{}) {
+	if member == (DBCommon.GroupMember{}) {
 		return errors.New("you can't send message to this group when you are not in it")
 	}
 	return nil

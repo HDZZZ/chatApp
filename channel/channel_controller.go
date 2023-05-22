@@ -3,7 +3,7 @@ package channel
 import (
 	"encoding/json"
 
-	DB "github.com/HDDDZ/test/chatApp/db"
+	DBCommon "github.com/HDDDZ/test/chatApp/data/common"
 	"github.com/gorilla/websocket"
 )
 
@@ -64,15 +64,15 @@ func mapkey(value *websocket.Conn) (key int, ok bool) {
 	return
 }
 
-func TransferMessageToDBMessage(message Message) DB.DBMessage {
+func TransferMessageToDBMessage(message Message) DBCommon.DBMessage {
 	body, _ := json.Marshal(message.MessageBody)
-	return DB.DBMessage{
+	return DBCommon.DBMessage{
 		Msg_id: int(message.MsgId), Sender_id: message.SenderId, Receiver_id: message.ReceiverId,
 		Conversatio_type: int(message.ConversationType), Message_body_type: int(message.MessageBody.MessageBodyType),
 		Content: string(body)}
 }
 
-func TransferDBMessageToMessage(message DB.DBMessage) Message {
+func TransferDBMessageToMessage(message DBCommon.DBMessage) Message {
 	var body MessageBody
 	json.Unmarshal([]byte(message.Content), &body)
 	return Message{
