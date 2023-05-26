@@ -33,7 +33,7 @@ func addUsers(users []Common.User) error {
 	mUsers := make(map[string]interface{}, len(users)*2)
 	for _, user := range users {
 		stream, _ := json.Marshal(user)
-		mUsers[createReidsrKey(USER_UID_KEY, user.Id)] = stream
+		mUsers[createReidsrKey(USER_UID_KEY, user.Id)] = string(stream)
 		mUsers[createReidsrKey(USER_TOKEN_KEY, user.Token)] = user.Id
 	}
 	return setPairs(mUsers)

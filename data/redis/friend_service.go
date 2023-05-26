@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	Common "github.com/HDDDZ/test/chatApp/data/common"
 )
@@ -16,22 +17,33 @@ const REQUEST_UID_KEY = "request_uid"
 
 func getRequestsByUid(uid string) []Common.ReuqestOfAddingFriend {
 	rids, err := get(createReidsrKey(REQUEST_UID_KEY, uid))
-	if err != nil {
+	if err != nil && rids == "" {
 		return []Common.ReuqestOfAddingFriend{}
 	}
-
-	return getRequestsByRids(rids)
+	return getRequestsByRids(removenullvalue(strings.Split(rids, "|"))...)
 }
 
 func getRequestsByRids(rids ...string) []Common.ReuqestOfAddingFriend {
+	fmt.Println("getRequestsByRids,reids=", rids)
 	for index, rid := range rids {
 		rids[index] = createReidsrKey(REQUEST_RID_KEY, rid)
 	}
 
-	requestStreams, _ := mget(rids...)
+	requestStreams, err := mget(rids...)
+	if err != nil {
+		return []Common.ReuqestOfAddingFriend{}
+	}
+	if len(requestStreams) == 0 {
+		return []Common.ReuqestOfAddingFriend{}
+	}
+	fmt.Println("getRequestsByRids,requestStreams=", requestStreams)
+
 	requests := make([]Common.ReuqestOfAddingFriend, len(requestStreams))
 	var newUser Common.ReuqestOfAddingFriend
 	for index, stream := range requestStreams {
+		if stream == nil {
+			continue
+		}
 		json.Unmarshal([]byte(stream.(string)), &newUser)
 		requests[index] = newUser
 	}
@@ -51,7 +63,7 @@ func refreshRequests(requests []Common.ReuqestOfAddingFriend) error {
 
 	for index, request := range requests {
 		stream, _ := json.Marshal(request)
-		requestParis[createReidsrKey(REQUEST_UID_KEY, request.Id)] = stream
+		requestParis[createReidsrKey(REQUEST_RID_KEY, request.Id)] = string(stream)
 		if isExists[index] {
 			uidParis[request.Sender_id] = fmt.Sprint(uidParis[request.Sender_id]) + "|" + fmt.Sprint(request.Id)
 			uidParis[request.Receiver_id] = fmt.Sprint(uidParis[request.Receiver_id]) + "|" + fmt.Sprint(request.Id)
@@ -76,10 +88,14 @@ func specifyUserRefreshRequests(uid string, requests []Common.ReuqestOfAddingFri
 	requestParis := make(map[string]interface{}, len(requests)+1)
 	var uidRequests string
 
-	for _, request := range requests {
+	for index, request := range requests {
 		stream, _ := json.Marshal(request)
-		requestParis[createReidsrKey(REQUEST_UID_KEY, request.Id)] = stream
-		uidRequests = uidRequests + "|" + fmt.Sprint(request.Id)
+		requestParis[createReidsrKey(REQUEST_UID_KEY, request.Id)] = string(stream)
+		if index == 0 {
+			uidRequests = fmt.Sprint(request.Id)
+		} else {
+			uidRequests = uidRequests + "|" + fmt.Sprint(request.Id)
+		}
 	}
 	requestParis[createReidsrKey(REQUEST_UID_KEY, uid)] = uidRequests
 	return setPairs(requestParis)
@@ -101,6 +117,7 @@ func checkRequestsExist(requests []Common.ReuqestOfAddingFriend) []bool {
 		} else {
 			requestIds[index] = true
 		}
+		fmt.Println("checkRequestsExist,result=", result)
 	}
 	return requestIds
 }
@@ -121,7 +138,8 @@ func getFriendsUidByUid(uid int) ([]string, error) {
 *
 */
 func updateFriendsUidByUid(uid int, friendsUid []int) error {
-	err := RPush(createReidsrKey(FRIEND_KEY, uid), friendsUid)
+	delete(createReidsrKey(FRIEND_KEY, uid))
+	err := setList(createReidsrKey(FRIEND_KEY, uid), friendsUid)
 	return err
 }
 

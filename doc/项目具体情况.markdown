@@ -16,5 +16,8 @@
 * 群模块
 #### business
 * 可能会添加该层, 用于放置业务功能, 减少common包的职责(上线通知, 消息监听,离线通知等)
-  
 
+
+# 项目架构
+  ![架构图](https://oxjd-static-file-dev.oss-cn-hangzhou.aliyuncs.com/web/wxapp/4AE383B0-6753-433A-AE21-CA52CE11611C.png)
+  

@@ -17,18 +17,25 @@ var userRedisService Redis.UserRedisService = &Redis.RedisService{}
 
 func QueryUserByToken(token string) Common.User {
 	user := userRedisService.GetUserByToken(token)
+	log("QueryUserByToken,redis,user=", user)
 	if user == (Common.User{}) {
 		user = userDBService.GetUserByToken(token)
+		log("QueryUserByToken,mysql,user=", user)
+		err := userRedisService.AddUserList(user)
+		log("QueryUserByToken,redis,err=", err)
 	}
 	return user
 }
 
 func QueryUserByUserName(userName string) []Common.User {
-	return userDBService.GetUserByUsername(userName)
+	users := userDBService.GetUserByUsername(userName)
+	log("QueryUserByUserName,mysql,user=", users)
+	return users
 }
 
 func queryUserByUserNameAndPwd(userName string, passwrod string) (Common.User, error) {
 	users := userDBService.GetUserByUsername(userName)
+	log("queryUserByUserNameAndPwd,mysql,user=", users)
 	var getByUserName bool
 	for _, user := range users {
 		getByUserName = true
@@ -46,8 +53,10 @@ func queryUserByUserNameAndPwd(userName string, passwrod string) (Common.User, e
 }
 
 func AddUser(userName string, password string) (Common.User, error) {
-	user, err := userDBService.AddUser(userName, password, Util.GenerateSecureToken(64))
-	userRedisService.AddUserList(user)
+	user, err := userDBService.AddUser(userName, password, Util.GenerateSecureToken(32))
+	log("AddUser,mysql,user=", user)
+	err = userRedisService.AddUserList(user)
+	log("AddUser,redis,err=", err)
 	return user, err
 }
 
@@ -60,10 +69,17 @@ func QueryUsersByUids[T string | int](uids []T) []Common.User {
 			sqlQueryIds = sqlQueryIds + "|" + fmt.Sprint(uidT)
 		}
 	}
+	log("QueryUsersByUids,redis,users=", users)
 	sqlUsers := userDBService.GetUserByUids(sqlQueryIds)
 	for _, user := range sqlUsers {
 		users[len(users)-1] = user
 	}
-	userRedisService.AddUserList(sqlUsers...)
+	log("QueryUsersByUids,mysql,users=", users)
+	err := userRedisService.AddUserList(sqlUsers...)
+	log("QueryUsersByUids,redis,AddUserList=", err)
 	return users
+}
+
+func log(logs ...any) {
+	fmt.Println("data,", logs)
 }

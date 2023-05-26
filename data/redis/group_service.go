@@ -85,6 +85,10 @@ func removeGroupMembers(gid string, members ...Common.GroupMember) error {
 	return err
 }
 
+func clearAllMemberInfo(gid string) {
+
+}
+
 /**
 *	更新群成员数据
  */

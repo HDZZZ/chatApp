@@ -2,8 +2,9 @@ package db
 
 import (
 	"errors"
-	Common "github.com/HDDDZ/test/chatApp/data/common"
 	"log"
+
+	Common "github.com/HDDDZ/test/chatApp/data/common"
 )
 
 func sendRequest(sendUid int, receiverUid int, msg string) (int64, error) {
@@ -11,7 +12,7 @@ func sendRequest(sendUid int, receiverUid int, msg string) (int64, error) {
 	id, err := _exec("INSERT INTO request_add_friend(msg,sender_uid,receiver_uid) VALUES(?,?,?)",
 		msg, sendUid, receiverUid)
 	if err != nil {
-		log.Fatal("insert into request_add_friend error", err)
+		log.Println("insert into request_add_friend error", err)
 		return 0, err
 	}
 	return id, err
@@ -21,7 +22,7 @@ func agreeRequest(requestId int) error {
 	// var value = fmt.Sprintf("%d,%d", userName, password);
 	_, err := _exec("UPDATE request_add_friend set request_state = ? where id=?", Common.AlreadyAgree, requestId)
 	if err != nil {
-		log.Fatal("insert into request_add_friend error", err)
+		log.Println("insert into request_add_friend error", err)
 		return err
 	}
 
@@ -32,7 +33,7 @@ func agreeRequest(requestId int) error {
 
 	err = friendWithSomeone(request.Sender_id, request.Receiver_id)
 	if err != nil {
-		log.Fatal("add friend error", err)
+		log.Println("add friend error", err)
 		return err
 	}
 	return err
@@ -42,7 +43,7 @@ func refuseRequest(requestId int) error {
 	// var value = fmt.Sprintf("%d,%d", userName, password);
 	_, err := _exec("UPDATE request_add_friend set request_state = ? where id=?", Common.AlreadyRefuse, requestId)
 	if err != nil {
-		log.Fatal("insert into request_add_friend error", err)
+		log.Println("insert into request_add_friend error", err)
 		return err
 	}
 	return err
@@ -52,7 +53,7 @@ func makeRequestState(uid_1 int, uid_2 int, state Common.RequestState) error {
 	// var value = fmt.Sprintf("%d,%d", userName, password);
 	_, err := _exec("UPDATE request_add_friend set request_state = ? where (sender_uid=? AND receiver_uid=?) OR (sender_uid=? AND receiver_uid=?)", state, uid_1, uid_2, uid_2, uid_1)
 	if err != nil {
-		log.Fatal("UPDATE into request_add_friend error", err)
+		log.Println("UPDATE into request_add_friend error", err)
 		return err
 	}
 	return err
@@ -93,7 +94,7 @@ func getAllFriendsUid(uid int) []int {
 func deleteFriend(uid int, friendUid int) error {
 	_, err := _exec("DELETE FROM friend_relation WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)", uid, friendUid, friendUid, uid)
 	if err != nil {
-		log.Fatal("DELETE friend error", err)
+		log.Println("DELETE friend error", err)
 		return err
 	}
 	return nil
@@ -107,6 +108,23 @@ func queryRequestById(requestId int) Common.ReuqestOfAddingFriend {
 		newUser := inputUser
 		messages = append(messages, newUser)
 	}, []any{requestId}, &inputUser.Id, &inputUser.Msg, &inputUser.Sender_id, &inputUser.Receiver_id, &inputUser.Requst_state)
+	if len(messages) == 0 {
+		return Common.ReuqestOfAddingFriend{}
+	}
+	return messages[0]
+}
+
+func queryRequestBySuidAndRuid(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend {
+	var messages = []Common.ReuqestOfAddingFriend{}
+	inputUser := Common.ReuqestOfAddingFriend{}
+
+	_query(query_Request_By_Uids, func(a ...any) {
+		newUser := inputUser
+		messages = append(messages, newUser)
+	}, []any{uid_1, uid_2, uid_2, uid_1}, &inputUser.Id, &inputUser.Msg, &inputUser.Sender_id, &inputUser.Receiver_id, &inputUser.Requst_state)
+	if len(messages) == 0 {
+		return Common.ReuqestOfAddingFriend{}
+	}
 	return messages[0]
 }
 
@@ -118,6 +136,9 @@ func queryRequestByUids(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend {
 		newUser := inputUser
 		messages = append(messages, newUser)
 	}, []any{uid_1, uid_2, uid_2, uid_1}, &inputUser.Id, &inputUser.Msg, &inputUser.Sender_id, &inputUser.Receiver_id, &inputUser.Requst_state)
+	if len(messages) == 0 {
+		return Common.ReuqestOfAddingFriend{}
+	}
 	return messages[0]
 }
 
@@ -125,7 +146,7 @@ func friendWithSomeone(uid_1 int, uid_2 int) error {
 	_, err := _exec("INSERT INTO friend_relation(user_id_1,user_id_2) VALUES(?,?)",
 		uid_1, uid_2)
 	if err != nil {
-		log.Fatal("insert into request_add_friend error", err)
+		log.Println("insert into request_add_friend error", err)
 		return err
 	}
 	return nil

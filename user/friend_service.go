@@ -3,8 +3,9 @@ package user
 import (
 	"errors"
 	"fmt"
-	DBCommon "github.com/HDDDZ/test/chatApp/data/common"
 	"strconv"
+
+	DBCommon "github.com/HDDDZ/test/chatApp/data/common"
 
 	Common "github.com/HDDDZ/test/chatApp/common"
 	DB "github.com/HDDDZ/test/chatApp/data"
@@ -124,6 +125,19 @@ func (instance *FriendServiceInstance) getAllFriendsUid(c *gin.Context) {
 		return
 	}
 	users := DB.GetAllFriendsUid(user.Id)
+	c.JSON(200, Common.CreateResultDataSuccess(users))
+}
+
+func (instance *FriendServiceInstance) queryRquest(c *gin.Context) {
+	_, err := getTokenByGin(c)
+	if err != nil {
+		return
+	}
+	requestID, err := getMustParamNumber(Common.REQUEST_PARAMS_REQUEST_ID, c)
+	if err != nil {
+		return
+	}
+	users := DB.QueryRequestById(requestID)
 	c.JSON(200, Common.CreateResultDataSuccess(users))
 }
 

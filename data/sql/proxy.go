@@ -26,6 +26,7 @@ type FriendSQLService interface {
 	GetAllFriendsUid(uid int) []int
 	DeleteFriend(uid int, friendUid int) error
 	QueryRequestById(uid int) Common.ReuqestOfAddingFriend
+	QueryRequestBySuidAndRuid(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend
 	QueryRequestByUids(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend
 }
 
@@ -121,6 +122,9 @@ func (service *SQLService) DeleteFriend(uid int, friendUid int) error {
 func (service *SQLService) QueryRequestById(uid int) Common.ReuqestOfAddingFriend {
 	return queryRequestById(uid)
 }
+func (service *SQLService) QueryRequestBySuidAndRuid(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend {
+	return queryRequestBySuidAndRuid(uid_1, uid_2)
+}
 func (service *SQLService) QueryRequestByUids(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend {
 	return queryRequestByUids(uid_1, uid_2)
 }
@@ -151,6 +155,7 @@ func (service *SQLService) RemoveMember(gid int, uids ...int) error {
 func (service *SQLService) GetAllMembersInfo(gid int) []Common.GroupMember {
 	return getAllMembersInfo(gid)
 }
+
 func (service *SQLService) GetAllMembersUid(gid int) []int {
 	return getAllMembersUid(gid)
 }

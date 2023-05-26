@@ -27,6 +27,12 @@
 
 ### 增加数据层(redis,mysql)
 
+
+### 更改请求层架构, 将其更改为注册接口方式,提供需要获取的参数,并且return interface{}
+reigsterPost(url,mustParms,possibleParams,func(mustParams,possibleParams)interface{})
+reigsterGet(url,mustParms,possibleParams,func(mustParams,possibleParams)interface{})
+
+
 ### 朋友圈
 
 

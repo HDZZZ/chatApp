@@ -8,18 +8,21 @@ import (
 )
 
 func create(ownerUid int, groupName string, memberUids ...int) (int64, error) {
+	fmt.Println("sql,create,memberUids=", memberUids)
 	id, err := _exec("INSERT INTO chat_group(group_name,ownerId) VALUES(?,?)",
 		groupName, ownerUid)
 	if err != nil {
 		log.Println("insert into chat_group error", err)
 		return 0, err
 	}
-	selectSQL := fmt.Sprintf("SELECT %v,%v,%v", id, ownerUid, Common.Owner)
+	var selectSQL string
 	for _, memberUid := range memberUids {
-		selectSQL = selectSQL + fmt.Sprintf("UNION ALL SELECT %v,%v,%v", id, memberUid, Common.Member)
+		selectSQL = selectSQL + fmt.Sprintf("(%v,%v,%v),", id, memberUid, Common.Member)
 	}
+	selectSQL = selectSQL + fmt.Sprintf("(%v,%v,%v)", id, ownerUid, Common.Owner)
 
-	_, err = _exec("INSERT INTO group_members(gid,uid,identity)" + selectSQL)
+	syntax := "INSERT INTO group_members(gid,uid,identity) VALUES" + selectSQL
+	_, err = _exec(syntax)
 
 	if err != nil {
 		log.Println("insert into group_members error", err)
@@ -31,7 +34,7 @@ func create(ownerUid int, groupName string, memberUids ...int) (int64, error) {
 func transferOwner(gid int, newOwnerId int, OlderOwnerId int) error {
 	// _, err := _exec("UPDATE chat_group set ownerId = ? where gid=?", newOwnerId, gid)
 	// if err != nil {
-	// 	log.Fatal("update chat_group owner error", err)
+	// 	log.Println("update chat_group owner error", err)
 	// 	return err
 	// }
 	fmt.Println("gid=", gid)
@@ -39,13 +42,13 @@ func transferOwner(gid int, newOwnerId int, OlderOwnerId int) error {
 	fmt.Println("OlderOwnerId=", OlderOwnerId)
 	_, err := _exec("UPDATE chat_group JOIN group_members ON chat_group.gid = group_members.gid  set chat_group.ownerId = ? , group_members.identity = ? where group_members.uid=? AND chat_group.gid = ?", newOwnerId, Common.Owner, newOwnerId, gid)
 	if err != nil {
-		log.Fatal("update chat_group owner error", err)
+		log.Println("update chat_group owner error", err)
 		return err
 	}
 
 	_, err = _exec("UPDATE group_members set identity = ? where gid=? AND uid=?", Common.Member, gid, OlderOwnerId)
 	if err != nil {
-		log.Fatal("update chat_group owner error", err)
+		log.Println("update chat_group owner error", err)
 		return err
 	}
 	//todo
@@ -73,7 +76,7 @@ func updateGroupInfo(gid int, groupName string, description string) error {
 	fmt.Println("sqlSentence=", sqlSentence)
 	_, err := _exec(sqlSentence, gid)
 	if err != nil {
-		log.Fatal("update chat_group info error", err)
+		log.Println("update chat_group info error", err)
 		return err
 	}
 	return err
@@ -133,7 +136,7 @@ func removeMember(gid int, uids ...int) error {
 	}
 	_, err := _exec(sqlSentence)
 	if err != nil {
-		log.Fatal("DELETE friend error", err)
+		log.Println("DELETE friend error", err)
 		return err
 	}
 	return nil
@@ -183,7 +186,7 @@ func updateMemberInfo(gid int, uid int, alias string, identity Common.MemberIden
 
 	_, err := _exec(fmt.Sprintf("UPDATE group_members set %s where gid=? AND uid=?", selectUpdate), gid, uid)
 	if err != nil {
-		log.Fatal("update chat_group info error", err)
+		log.Println("update chat_group info error", err)
 		return err
 	}
 	return nil

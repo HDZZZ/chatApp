@@ -1,6 +1,10 @@
 package redis
 
-import "github.com/go-redis/redis"
+import (
+	"fmt"
+
+	"github.com/go-redis/redis"
+)
 
 var rdb *redis.Client
 
@@ -16,12 +20,31 @@ func set(key string, value interface{}) error {
 	return rdb.Set(key, value, 0).Err()
 }
 
-func setList(key string, value []interface{}) error {
-	_, err := rdb.LPush(key, value...).Result()
+// insert value to tail, maintian data inserted before
+func setList[T interface{} | int | string](key string, value []T) error {
+	if len(value) == 0 {
+		return set(key, "")
+	}
+	arrayPairs := make([]interface{}, len(value))
+	for index, value := range value {
+		arrayPairs[index] = value
+	}
+	fmt.Println("setList,key=", key, "newValue=", arrayPairs)
+	_, err := rdb.LPush(key, arrayPairs...).Result()
 	return err
 }
-func setPairs(pairs ...interface{}) error {
-	_, err := rdb.MSet(pairs).Result()
+
+// todo
+func setPairs[T interface{} | string](pairs map[string]T) error {
+	arrayPairs := make([]interface{}, len(pairs)*2)
+	var index = 0
+	for key, value := range pairs {
+		arrayPairs[index] = key
+		index++
+		arrayPairs[index] = value
+		index++
+	}
+	_, err := rdb.MSet(arrayPairs...).Result()
 	return err
 }
 
@@ -35,15 +58,34 @@ func get(key string) (string, error) {
 }
 
 func mget(key ...string) ([]interface{}, error) {
-	return rdb.MGet(key...).Result()
+	result, err := rdb.MGet(key...).Result()
+	fmt.Println("redis,mget,key=", key, "result=", result)
+	fmt.Println("err=", err)
+
+	var filtedResult []interface{}
+	for _, value := range result {
+		if value != nil {
+			filtedResult = append(filtedResult, value)
+		}
+	}
+	return filtedResult, err
 }
 
-func RPush(key string, value ...interface{}) error {
-	return rdb.RPush(key, value).Err()
+// insert value to tail, maintian data inserted before
+func RPush[T interface{} | int | string](key string, value []T) error {
+
+	arrayPairs := make([]interface{}, len(value))
+	for index, value := range value {
+		arrayPairs[index] = value
+	}
+
+	err := rdb.RPush(key, arrayPairs...).Err()
+	return err
 }
 
 func LRange(key string) ([]string, error) {
 	resut, err := rdb.LRange(key, 0, -1).Result()
+
 	return resut, err
 }
 

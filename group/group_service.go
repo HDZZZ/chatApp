@@ -31,10 +31,13 @@ func (instance *GroupServiceInstance) createGroup(c *gin.Context) {
 		return
 	}
 	mermbers := AizuArray(c.Query(Common.REQUEST_PARAMS_MEMBER_UID), ",")
+	fmt.Println("service,createGroup,mermbers=", mermbers)
+
 	id, err := DB.Create(user.Id, createGroupName(user.UserName), mermbers...)
 	if err == nil {
 		group := DB.GetGroupByGid(int(id))
 		c.JSON(200, Common.CreateResultDataSuccess(group))
+		return
 	}
 	c.JSON(200, Common.CreateResultDataError(Common.ERROR_CODE_3001, Common.ErrCode[Common.ERROR_CODE_3001]+err.Error()))
 }

@@ -2,8 +2,9 @@ package db
 
 import (
 	"fmt"
-	Common "github.com/HDDDZ/test/chatApp/data/common"
 	"log"
+
+	Common "github.com/HDDDZ/test/chatApp/data/common"
 )
 
 func pushMessage(message Common.DBMessage) (int64, error) {
@@ -11,7 +12,7 @@ func pushMessage(message Common.DBMessage) (int64, error) {
 	id, err := _exec("INSERT INTO messages(sender_id,receiver_id,conversatio_type,message_body_type,content) VALUES(?,?,?,?,?)",
 		message.Sender_id, message.Receiver_id, message.Conversatio_type, message.Message_body_type, message.Content)
 	if err != nil {
-		log.Fatal("insert into users error", err)
+		log.Println("insert into users error", err)
 		return 0, err
 	}
 	return id, err

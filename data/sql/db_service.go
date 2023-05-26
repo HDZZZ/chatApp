@@ -19,7 +19,7 @@ func init() {
 	dbc, err := sql.Open("mysql",
 		"root:mysql@tcp(120.79.7.215:3306)/chat_app")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	db = dbc
 
@@ -68,38 +68,43 @@ func addUser(userName string, password string, token string) (Common.User, error
 	// var value = fmt.Sprintf("%d,%d", userName, password);
 	id, err := _exec("INSERT INTO users(user_name,pass_word) VALUES(?,?)", userName, password)
 	if err != nil {
-		log.Fatal("insert into users error", err)
+		log.Println("insert into users error", err)
 		return Common.User{}, err
 	}
 	_, err = _exec("INSERT INTO users_token(token,uid) VALUES(?,?)", token, id)
 	if err != nil {
-		log.Fatal("insert into users_token error", err)
+		log.Println("insert into users_token error", err)
 		return Common.User{}, err
 	}
 	users := _queryUserByAny("users.uid", id)
 	return users[0], err
 }
 
+/*
+*
+只有insert语句才会返回id
+*/
 func _exec(query string, args ...any) (lastId int64, err error) {
 	res, err := db.Exec(query, args...)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	lastId, err = res.LastInsertId()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
+	fmt.Println("sql,_exec,lastId=", lastId)
 	return
 }
 
 func _delete(query string, args ...any) (count int64, err error) {
 	res, err := db.Exec(query, args...)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	count, err = res.RowsAffected()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	return
 }
@@ -108,19 +113,19 @@ func _query(sqlQuery string, call func(...any), args []any, queryValue ...any) {
 
 	rows, err := db.Query(sqlQuery, args...)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		err := rows.Scan(queryValue...)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 		call(queryValue...)
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }
 

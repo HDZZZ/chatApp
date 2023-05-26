@@ -1,6 +1,8 @@
 package redis
 
 import (
+	"fmt"
+
 	Common "github.com/HDDDZ/test/chatApp/data/common"
 )
 
@@ -84,6 +86,7 @@ func (service *RedisService) GetGroupByGid(gid string) Common.Group {
 func (service *RedisService) AddGroupMembers(gid string, members ...Common.GroupMember) error {
 	return addGroupMembers(gid, members...)
 }
+
 func (service *RedisService) RefreshGroupAllMembers(gid string, members ...Common.GroupMember) error {
 	return refreshGroupAllMembers(gid, members...)
 }
@@ -113,4 +116,8 @@ func (service *RedisService) GetAllWaitMsgIdOfSomeBody(uid string) []string {
 }
 func (service *RedisService) GetMessageFromMsgID(uid string) Common.DBMessage {
 	return getMessageFromMsgID(uid)
+}
+
+func log(logs ...string) {
+	fmt.Println("redis,", logs)
 }
