@@ -32,6 +32,10 @@ func initUserService(ginInstance *gin.Engine) {
 	ginInstance.GET(http_path_friend_all_uid, friendService.getAllFriendsUid)
 	ginInstance.GET(http_path_friend_query, friendService.queryRquest)
 	ginInstance.POST(http_path_friend_delete, friendService.deleteFriend)
+
+	var dev = DevelopeServiceInstance{}
+	ginInstance.POST("/testDB", dev.testDB)
+
 }
 
 func UserMain() {

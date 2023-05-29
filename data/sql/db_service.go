@@ -1,32 +1,12 @@
 package db
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
-	AppCommon "github.com/HDDDZ/test/chatApp/common"
 	Common "github.com/HDDDZ/test/chatApp/data/common"
 	_ "github.com/go-sql-driver/mysql"
 )
-
-var db *sql.DB
-
-func init() {
-	// dbc, err := sql.Open("mysql",
-	// 	"root:hanzhi123@tcp(127.0.0.1:3306)/chat_app")
-	dbc, err := sql.Open("mysql",
-		"root:mysql@tcp(120.79.7.215:3306)/chat_app")
-	if err != nil {
-		log.Println(err)
-	}
-	db = dbc
-
-	AppCommon.RegisterSubscriber(AppCommon.AppClose, func(params ...any) {
-		appClosed()
-	})
-}
 
 func queryUserByToken(token string) []Common.User {
 	return _queryUserByAny("users_token.token", token)
@@ -68,12 +48,12 @@ func addUser(userName string, password string, token string) (Common.User, error
 	// var value = fmt.Sprintf("%d,%d", userName, password);
 	id, err := _exec("INSERT INTO users(user_name,pass_word) VALUES(?,?)", userName, password)
 	if err != nil {
-		log.Println("insert into users error", err)
+		fmt.Println("insert into users error", err)
 		return Common.User{}, err
 	}
 	_, err = _exec("INSERT INTO users_token(token,uid) VALUES(?,?)", token, id)
 	if err != nil {
-		log.Println("insert into users_token error", err)
+		fmt.Println("insert into users_token error", err)
 		return Common.User{}, err
 	}
 	users := _queryUserByAny("users.uid", id)
@@ -87,11 +67,11 @@ func addUser(userName string, password string, token string) (Common.User, error
 func _exec(query string, args ...any) (lastId int64, err error) {
 	res, err := db.Exec(query, args...)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 	lastId, err = res.LastInsertId()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 	fmt.Println("sql,_exec,lastId=", lastId)
 	return
@@ -100,11 +80,11 @@ func _exec(query string, args ...any) (lastId int64, err error) {
 func _delete(query string, args ...any) (count int64, err error) {
 	res, err := db.Exec(query, args...)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 	count, err = res.RowsAffected()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 	return
 }
@@ -113,19 +93,19 @@ func _query(sqlQuery string, call func(...any), args []any, queryValue ...any) {
 
 	rows, err := db.Query(sqlQuery, args...)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		err := rows.Scan(queryValue...)
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
 		}
 		call(queryValue...)
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 }
 
