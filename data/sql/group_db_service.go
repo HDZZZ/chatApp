@@ -6,22 +6,31 @@ import (
 	Common "github.com/HDDDZ/test/chatApp/data/common"
 )
 
+const _table_chat_group = "chat_group"
+const _table_group_members = "group_members"
+const _field_group_name = "group_name"
+const _field_ownerId = "ownerId"
+const _field_gid = "gid"
+const _field_uid = "uid"
+const _field_identity = "identity"
+
 func create(ownerUid int, groupName string, memberUids ...int) (int64, error) {
-	fmt.Println("sql,create,memberUids=", memberUids)
-	id, err := _exec("INSERT INTO chat_group(group_name,ownerId) VALUES(?,?)",
-		groupName, ownerUid)
+	id, err := insertRows(_table_chat_group, []string{_field_group_name, _field_ownerId},
+		[]any{groupName, ownerUid})
 	if err != nil {
 		fmt.Println("insert into chat_group error", err)
 		return 0, err
 	}
-	var selectSQL string
-	for _, memberUid := range memberUids {
-		selectSQL = selectSQL + fmt.Sprintf("(%v,%v,%v),", id, memberUid, Common.Member)
-	}
-	selectSQL = selectSQL + fmt.Sprintf("(%v,%v,%v)", id, ownerUid, Common.Owner)
 
-	syntax := "INSERT INTO group_members(gid,uid,identity) VALUES" + selectSQL
-	_, err = _exec(syntax)
+	var insertValues = make([][]any, len(memberUids)+1)
+	for index, memberUid := range memberUids {
+		insertValues[index] = []any{id, memberUid, Common.Member}
+	}
+	insertValues[len(insertValues)-1] = []any{id,
+		ownerUid, Common.Owner}
+
+	_, err = insertRows(_table_group_members, []string{_field_gid,
+		_field_uid, _field_identity}, insertValues...)
 
 	if err != nil {
 		fmt.Println("insert into group_members error", err)
@@ -31,31 +40,27 @@ func create(ownerUid int, groupName string, memberUids ...int) (int64, error) {
 }
 
 func transferOwner(gid int, newOwnerId int, OlderOwnerId int) error {
-	// _, err := _exec("UPDATE chat_group set ownerId = ? where gid=?", newOwnerId, gid)
-	// if err != nil {
-	// 	fmt.Println("update chat_group owner error", err)
-	// 	return err
-	// }
-	fmt.Println("gid=", gid)
-	fmt.Println("newOwnerId=", newOwnerId)
-	fmt.Println("OlderOwnerId=", OlderOwnerId)
-	_, err := _exec("UPDATE chat_group JOIN group_members ON chat_group.gid = group_members.gid  set chat_group.ownerId = ? , group_members.identity = ? where group_members.uid=? AND chat_group.gid = ?", newOwnerId, Common.Owner, newOwnerId, gid)
+
+	err := updateRows(_table_chat_group+" JOIN group_members ON chat_group.gid = group_members.gid",
+		fmt.Sprintf("chat_group.ownerId = %v , group_members.identity = %v", newOwnerId,
+			Common.Owner),
+		fmt.Sprintf("group_members.uid=%v AND chat_group.gid = %v", newOwnerId, gid))
 	if err != nil {
 		fmt.Println("update chat_group owner error", err)
 		return err
 	}
 
-	_, err = _exec("UPDATE group_members set identity = ? where gid=? AND uid=?", Common.Member, gid, OlderOwnerId)
+	err = updateRows(_table_group_members, fmt.Sprintf("identity = %v", Common.Member),
+		fmt.Sprintf("gid=%v AND uid=%v", gid, OlderOwnerId))
 	if err != nil {
 		fmt.Println("update chat_group owner error", err)
 		return err
 	}
-	//todo
 	return err
 }
 
 func leaveGroup(gid int, uid int) error {
-	_, err := _exec(fmt.Sprintf("DELETE FROM group_members WHERE %s", fmt.Sprintf("gid = %v AND uid= %v", gid, uid)))
+	err := delRows(_table_group_members, fmt.Sprintf("gid = %v AND uid= %v", gid, uid))
 	if err != nil {
 		fmt.Println("leave group error", err)
 		return err
@@ -71,9 +76,8 @@ func updateGroupInfo(gid int, groupName string, description string) error {
 	if description != "" {
 		selectUpdate = selectUpdate + ", description = '" + description + "'"
 	}
-	sqlSentence := fmt.Sprintf("UPDATE chat_group set %s where gid=?", selectUpdate)
-	fmt.Println("sqlSentence=", sqlSentence)
-	_, err := _exec(sqlSentence, gid)
+
+	err := updateRows(_table_chat_group, selectUpdate, fmt.Sprintf("gid=%v", gid))
 	if err != nil {
 		fmt.Println("update chat_group info error", err)
 		return err
@@ -82,40 +86,27 @@ func updateGroupInfo(gid int, groupName string, description string) error {
 }
 
 func getGroupByGid(gid int) Common.Group {
-	var messages = []Common.Group{}
-	inputUser := Common.Group{}
-
-	_query(query_Group_By_Gid, func(a ...any) {
-		newUser := inputUser
-		messages = append(messages, newUser)
-	}, []any{gid}, &inputUser.Gid, &inputUser.GroupName, &inputUser.OwnerId, &inputUser.Description)
-	return messages[0]
+	groups, _ := queryStruct[Common.Group](fmt.Sprintf(query_Group_By_Gid, gid))
+	if len(groups) == 0 {
+		return Common.Group{}
+	}
+	return groups[0]
 }
 
 func getAllGroupsByUid(uid int) []Common.Group {
-	var messages = []Common.Group{}
-	inputUser := Common.Group{}
-
-	_query(query_Groups_By_Uid, func(a ...any) {
-		newUser := inputUser
-		messages = append(messages, newUser)
-	}, []any{uid}, &inputUser.Gid, &inputUser.GroupName, &inputUser.OwnerId, &inputUser.Description)
-	return messages
+	groups, _ := queryStruct[Common.Group](fmt.Sprintf(query_Groups_By_Uid, uid))
+	return groups
 }
 
 func addMember(gid int, uids ...int) error {
 
-	sqlSentence := "INSERT INTO group_members(gid,uid,identity)"
-
-	for index, uid := range uids {
-		if index == 0 {
-			sqlSentence = sqlSentence + fmt.Sprintf(" VALUES(%v,%v,%v)", gid, uid, Common.Member)
-		} else {
-			sqlSentence = sqlSentence + fmt.Sprintf(",(%v,%v,%v)", gid, uid, Common.Member)
-		}
+	var insertValues = make([][]any, len(uids))
+	for index, memberUid := range uids {
+		insertValues[index] = []any{gid, memberUid, Common.Member}
 	}
-	fmt.Println("sqlSentence=", sqlSentence)
-	_, err := _exec(sqlSentence)
+
+	_, err := insertRows(_table_group_members, []string{_field_gid,
+		_field_uid, _field_identity}, insertValues...)
 
 	if err != nil {
 		fmt.Println("insert into group_members error", err)
@@ -125,7 +116,7 @@ func addMember(gid int, uids ...int) error {
 }
 
 func removeMember(gid int, uids ...int) error {
-	sqlSentence := "DELETE FROM group_members WHERE"
+	var sqlSentence string
 	for index, uid := range uids {
 		if index == 0 {
 			sqlSentence = sqlSentence + fmt.Sprintf("(gid = %v AND uid= %v)", gid, uid)
@@ -133,7 +124,7 @@ func removeMember(gid int, uids ...int) error {
 			sqlSentence = sqlSentence + fmt.Sprintf("(gid = %v AND uid= %v)", gid, uid)
 		}
 	}
-	_, err := _exec(sqlSentence)
+	err := delRows(_table_group_members, sqlSentence)
 	if err != nil {
 		fmt.Println("DELETE friend error", err)
 		return err
@@ -142,39 +133,32 @@ func removeMember(gid int, uids ...int) error {
 }
 
 func getAllMembersInfo(gid int) []Common.GroupMember {
-	var messages = []Common.GroupMember{}
-	inputUser := Common.GroupMember{}
-
-	_query(query_GroupMembers_By_Gid, func(a ...any) {
-		newUser := inputUser
-		messages = append(messages, newUser)
-	}, []any{gid}, &inputUser.Gid, &inputUser.Uid, &inputUser.Alias, &inputUser.Identity)
-	return messages
+	members, _ := queryStruct[Common.GroupMember](fmt.Sprintf(query_GroupMembers_By_Gid, gid))
+	return members
 }
 
 func getAllMembersUid(gid int) []int {
 	var messages = []int{}
 	var inputUser int
 
-	_query(query_GroupMembersUid_By_Gid, func(a ...any) {
+	queryRows(fmt.Sprintf(query_GroupMembersUid_By_Gid, gid), func() {
 		newUser := inputUser
 		messages = append(messages, newUser)
-	}, []any{gid}, &inputUser)
+	}, &inputUser)
 	return messages
 }
 
 func getMemberInfo(gid int, uid int) Common.GroupMember {
-	var messages = []Common.GroupMember{}
-	inputUser := Common.GroupMember{}
+	members, _ := queryStruct[Common.GroupMember](fmt.Sprintf(query_GroupMember, gid, uid))
+	if len(members) == 0 {
+		return Common.GroupMember{}
+	}
+	return members[0]
 
-	_query(query_GroupMember, func(a ...any) {
-		newUser := inputUser
-		messages = append(messages, newUser)
-	}, []any{gid, uid}, &inputUser.Gid, &inputUser.Uid, &inputUser.Alias, &inputUser.Identity)
-	return messages[0]
 }
 
 func updateMemberInfo(gid int, uid int, alias string, identity Common.MemberIdentity) error {
+
 	var selectUpdate string
 	if alias != "" {
 		selectUpdate = "alias = '" + alias + "'"
@@ -183,7 +167,8 @@ func updateMemberInfo(gid int, uid int, alias string, identity Common.MemberIden
 		selectUpdate = selectUpdate + ", identity = " + fmt.Sprint(identity)
 	}
 
-	_, err := _exec(fmt.Sprintf("UPDATE group_members set %s where gid=? AND uid=?", selectUpdate), gid, uid)
+	err := updateRows(_table_group_members, selectUpdate,
+		fmt.Sprintf("gid=%v AND uid=%v", gid, uid))
 	if err != nil {
 		fmt.Println("update chat_group info error", err)
 		return err

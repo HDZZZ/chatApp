@@ -1,27 +1,27 @@
 package common
 
 type User struct {
-	Id       int
-	UserName string
-	Password string `json:"-"`
+	Id       int    `mapstructure:"uid"`
+	UserName string `mapstructure:"user_name"`
+	Password string `json:"-" mapstructure:"pass_word"`
 	Token    string `json:"Token,omitempty"`
 }
 
 type DBMessage struct {
-	Msg_id            int
-	Sender_id         int
-	Receiver_id       int
-	Conversatio_type  int
-	Message_body_type int
-	Content           string
+	Msg_id            int    `mapstructure:"msg_id"`
+	Sender_id         int    `mapstructure:"sender_id"`
+	Receiver_id       int    `mapstructure:"receiver_id"`
+	Conversatio_type  int    `mapstructure:"conversatio_type"`
+	Message_body_type int    `mapstructure:"message_body_type"`
+	Content           string `mapstructure:"content"`
 }
 
 type ReuqestOfAddingFriend struct {
-	Sender_id    int
-	Receiver_id  int
-	Id           int
-	Msg          string
-	Requst_state RequestState
+	Sender_id    int          `mapstructure:"sender_uid"`
+	Receiver_id  int          `mapstructure:"receiver_uid"`
+	Id           int          `mapstructure:"id"`
+	Msg          string       `mapstructure:"msg"`
+	Requst_state RequestState `mapstructure:"request_state"`
 }
 
 type RequestState int8
@@ -35,18 +35,18 @@ const (
 )
 
 type Group struct {
-	Gid         int
-	GroupName   string
-	OwnerId     int
-	Description string
-	MemberCount int
+	Gid         int    `mapstructure:"gid"`
+	GroupName   string `mapstructure:"group_name"`
+	OwnerId     int    `mapstructure:"ownerId"`
+	Description string `mapstructure:"description"`
+	MemberCount int    `mapstructure:"member_count"`
 }
 
 type GroupMember struct {
-	Gid      int
-	Alias    string
-	Uid      int
-	Identity MemberIdentity
+	Gid      int            `mapstructure:"gid"`
+	Alias    string         `mapstructure:"alias"`
+	Uid      int            `mapstructure:"uid"`
+	Identity MemberIdentity `mapstructure:"identity"`
 }
 type MemberIdentity int8
 

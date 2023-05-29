@@ -1,6 +1,9 @@
 package user
 
 import (
+	Common "github.com/HDDDZ/test/chatApp/common"
+	DataCommon "github.com/HDDDZ/test/chatApp/data/common"
+	SQL "github.com/HDDDZ/test/chatApp/data/sql"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,9 +16,9 @@ type DevelopeServiceInstance struct {
 
 func (instance *DevelopeServiceInstance) testDB(c *gin.Context) {
 	// var user DBUser
-	// users, _ := SQL.QueryStruct("select * from users", user)
+	users := SQL.Test[DataCommon.User]()
 	// // fmt.Println("")
-	// c.JSON(200, Common.CreateResultDataSuccess(users))
+	c.JSON(200, Common.CreateResultDataSuccess(users))
 }
 
 type DBUser struct {

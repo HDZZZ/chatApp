@@ -7,25 +7,28 @@ import (
 	Common "github.com/HDDDZ/test/chatApp/data/common"
 )
 
+const _table_reuest_add_friend = "request_add_friend"
+const _table_friend_relation = "friend_relation"
+const _field_msg = "msg"
+const _field_sender_uid = "sender_uid"
+const _field_receiver_uid = "receiver_uid"
+const _field_user_id_1 = "user_id_1"
+const _field_user_id_2 = "user_id_2"
+
 func sendRequest(sendUid int, receiverUid int, msg string) (int64, error) {
-	// var value = fmt.Sprintf("%d,%d", userName, password);
-	id, err := _exec("INSERT INTO request_add_friend(msg,sender_uid,receiver_uid) VALUES(?,?,?)",
-		msg, sendUid, receiverUid)
-	if err != nil {
-		fmt.Println("insert into request_add_friend error", err)
-		return 0, err
-	}
+	id, err := insertRows(_table_reuest_add_friend, []string{_field_msg, _field_sender_uid,
+		_field_receiver_uid}, []any{msg, sendUid, receiverUid})
+
 	return id, err
 }
 
 func agreeRequest(requestId int) error {
-	// var value = fmt.Sprintf("%d,%d", userName, password);
-	_, err := _exec("UPDATE request_add_friend set request_state = ? where id=?", Common.AlreadyAgree, requestId)
+	err := updateRows(_table_reuest_add_friend, fmt.Sprintf("request_state = %v",
+		Common.AlreadyAgree), fmt.Sprintf("id = %v", requestId))
 	if err != nil {
 		fmt.Println("insert into request_add_friend error", err)
 		return err
 	}
-
 	request := queryRequestById(requestId)
 	if request == (Common.ReuqestOfAddingFriend{}) {
 		return errors.New("无此请求")
@@ -40,8 +43,8 @@ func agreeRequest(requestId int) error {
 }
 
 func refuseRequest(requestId int) error {
-	// var value = fmt.Sprintf("%d,%d", userName, password);
-	_, err := _exec("UPDATE request_add_friend set request_state = ? where id=?", Common.AlreadyRefuse, requestId)
+	err := updateRows(_table_reuest_add_friend, fmt.Sprintf("request_state = %v",
+		Common.AlreadyRefuse), fmt.Sprintf("id = %v", requestId))
 	if err != nil {
 		fmt.Println("insert into request_add_friend error", err)
 		return err
@@ -50,8 +53,9 @@ func refuseRequest(requestId int) error {
 }
 
 func makeRequestState(uid_1 int, uid_2 int, state Common.RequestState) error {
-	// var value = fmt.Sprintf("%d,%d", userName, password);
-	_, err := _exec("UPDATE request_add_friend set request_state = ? where (sender_uid=? AND receiver_uid=?) OR (sender_uid=? AND receiver_uid=?)", state, uid_1, uid_2, uid_2, uid_1)
+	err := updateRows(_table_reuest_add_friend, fmt.Sprintf("request_state = %v",
+		state), fmt.Sprintf(`(sender_uid=%v AND receiver_uid=%v) OR 
+		(sender_uid=%v AND receiver_uid=%v)`, uid_1, uid_2, uid_2, uid_1))
 	if err != nil {
 		fmt.Println("UPDATE into request_add_friend error", err)
 		return err
@@ -60,24 +64,12 @@ func makeRequestState(uid_1 int, uid_2 int, state Common.RequestState) error {
 }
 
 func getAllRequestOfSomebody(uid int) []Common.ReuqestOfAddingFriend {
-	var messages = []Common.ReuqestOfAddingFriend{}
-	inputUser := Common.ReuqestOfAddingFriend{}
-
-	_query(query_All_Request_By_Uid, func(a ...any) {
-		newUser := inputUser
-		messages = append(messages, newUser)
-	}, []any{uid, uid}, &inputUser.Id, &inputUser.Msg, &inputUser.Sender_id, &inputUser.Receiver_id, &inputUser.Requst_state)
+	messages, _ := queryStruct[Common.ReuqestOfAddingFriend](fmt.Sprintf(query_All_Request_By_Uid, uid, uid))
 	return messages
 }
 
 func getAllFriends(uid int) []Common.User {
-	var users = []Common.User{}
-	user := Common.User{}
-
-	_query(query_All_Friends_By_Uid, func(a ...any) {
-		user := user
-		users = append(users, user)
-	}, []any{uid, uid, uid}, &user.Id, &user.UserName)
+	users, _ := queryStruct[Common.User](fmt.Sprintf(query_All_Friends_By_Uid, uid, uid, uid))
 	return users
 }
 
@@ -85,14 +77,15 @@ func getAllFriendsUid(uid int) []int {
 	var users = []int{}
 	var friendUid int
 
-	_query(query_All_Friends_Uid_By_Uid, func(a ...any) {
+	queryRows(fmt.Sprintf(query_All_Friends_Uid_By_Uid, uid, uid, uid), func() {
 		users = append(users, friendUid)
-	}, []any{uid, uid, uid}, &friendUid)
+	}, &friendUid)
 	return users
 }
 
 func deleteFriend(uid int, friendUid int) error {
-	_, err := _exec("DELETE FROM friend_relation WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)", uid, friendUid, friendUid, uid)
+	err := delRows(_table_friend_relation, fmt.Sprintf(`(user_id_1 = %v AND user_id_2 = %v) 
+	OR (user_id_1 = %v AND user_id_2 = %v)`, uid, friendUid, friendUid, uid))
 	if err != nil {
 		fmt.Println("DELETE friend error", err)
 		return err
@@ -101,50 +94,36 @@ func deleteFriend(uid int, friendUid int) error {
 }
 
 func queryRequestById(requestId int) Common.ReuqestOfAddingFriend {
-	var messages = []Common.ReuqestOfAddingFriend{}
-	inputUser := Common.ReuqestOfAddingFriend{}
-
-	_query(query_Request_By_Id, func(a ...any) {
-		newUser := inputUser
-		messages = append(messages, newUser)
-	}, []any{requestId}, &inputUser.Id, &inputUser.Msg, &inputUser.Sender_id, &inputUser.Receiver_id, &inputUser.Requst_state)
-	if len(messages) == 0 {
+	requests, _ := queryStruct[Common.ReuqestOfAddingFriend](
+		fmt.Sprintf(query_Request_By_Id, requestId))
+	if len(requests) == 0 {
 		return Common.ReuqestOfAddingFriend{}
 	}
-	return messages[0]
+	return requests[0]
 }
 
 func queryRequestBySuidAndRuid(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend {
-	var messages = []Common.ReuqestOfAddingFriend{}
-	inputUser := Common.ReuqestOfAddingFriend{}
-
-	_query(query_Request_By_Uids, func(a ...any) {
-		newUser := inputUser
-		messages = append(messages, newUser)
-	}, []any{uid_1, uid_2, uid_2, uid_1}, &inputUser.Id, &inputUser.Msg, &inputUser.Sender_id, &inputUser.Receiver_id, &inputUser.Requst_state)
-	if len(messages) == 0 {
+	requests, _ := queryStruct[Common.ReuqestOfAddingFriend](fmt.Sprintf(
+		query_Request_By_Uids, uid_1, uid_2, uid_2, uid_1))
+	if len(requests) == 0 {
 		return Common.ReuqestOfAddingFriend{}
 	}
-	return messages[0]
+	return requests[0]
 }
 
 func queryRequestByUids(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend {
-	var messages = []Common.ReuqestOfAddingFriend{}
-	inputUser := Common.ReuqestOfAddingFriend{}
-
-	_query(query_Request_By_Uids, func(a ...any) {
-		newUser := inputUser
-		messages = append(messages, newUser)
-	}, []any{uid_1, uid_2, uid_2, uid_1}, &inputUser.Id, &inputUser.Msg, &inputUser.Sender_id, &inputUser.Receiver_id, &inputUser.Requst_state)
-	if len(messages) == 0 {
+	requests, _ := queryStruct[Common.ReuqestOfAddingFriend](fmt.Sprintf(
+		query_Request_By_Uids, uid_1, uid_2, uid_2, uid_1))
+	if len(requests) == 0 {
 		return Common.ReuqestOfAddingFriend{}
 	}
-	return messages[0]
+	return requests[0]
 }
 
 func friendWithSomeone(uid_1 int, uid_2 int) error {
-	_, err := _exec("INSERT INTO friend_relation(user_id_1,user_id_2) VALUES(?,?)",
-		uid_1, uid_2)
+	_, err := insertRows(_table_friend_relation, []string{_field_user_id_1, _field_user_id_2},
+		[]any{uid_1, uid_2})
+
 	if err != nil {
 		fmt.Println("insert into request_add_friend error", err)
 		return err

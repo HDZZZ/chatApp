@@ -34,15 +34,32 @@ func init() {
   - tableName: 表名,例如 users
     insertKeys: 插入的值对应的key, 例如  ["username","password"]
     values: 插入的值, 每个[]string 对应一条row
+    for examle:	insertRows("request_add_friend", []string{"msg", "sender_uid",
+    "receiver_uid"}, []any{"msgs", 100006, 100001})
 */
-func insertRows(tableName string, insertKeys []string, values ...[]string) (insertIds int64, err error) {
+func insertRows(tableName string, insertKeys []string, values ...[]any) (insertIds int64, err error) {
 
 	var syntax string = fmt.Sprintf("INSERT INTO %s(%s) VALUES", tableName, strings.Join(insertKeys, ","))
 
-	for _, rowValue := range values {
-		syntax = syntax + "(" + strings.Join(rowValue, ",") + ")"
+	for index, rowValue := range values {
+		var newRowValue string
+		for _, field := range rowValue {
+			if reflect.TypeOf(field).Name() == "string" {
+				field = "\"" + fmt.Sprint(field) + "\""
+			}
+			if newRowValue == "" {
+				newRowValue = fmt.Sprint(field)
+			} else {
+				newRowValue = newRowValue + "," + fmt.Sprint(field)
+			}
+		}
+		if index == 0 {
+			syntax = syntax + "(" + newRowValue + ")"
+		} else {
+			syntax = syntax + ",(" + newRowValue + ")"
+		}
 	}
-	log("insert,syntax=", syntax)
+	log("insertRows,syntax=", syntax)
 
 	res, err := db.Exec(syntax)
 	if err != nil {
@@ -54,16 +71,18 @@ func insertRows(tableName string, insertKeys []string, values ...[]string) (inse
 		elog(err)
 		return
 	}
+
 	return
 }
 
 /*
-  - 查询数据
+  - 查询数据(如果想要查询结果为struct,请使用 queryStruct)
   - querySynax: 查询语句
     call: 单次遍历结束后会被调用
     queryValue: 查询的结果会赋予给这些变量
 */
 func queryRows(querySynax string, call func(), queryValue ...any) error {
+	log("queryRows,syntax=", querySynax)
 	rows, err := db.Query(querySynax)
 	if err != nil {
 		fmt.Println(err)
@@ -88,10 +107,12 @@ func queryRows(querySynax string, call func(), queryValue ...any) error {
 /*
   - 查询数据
   - querySynax: 查询语句
-    user: 泛型,确定返回结果的类型, 注意, 需要时struct类型且成员变量的tag
-    mapstructure 需要与数据库表中的colum对应,注意:当前只支持 int,string类型 queryStruct
+    mapstructure 需要与数据库表中的colum对应,注意:当前只支持 int,string类型
+    T: 需要在查询的字段上加 `mapstructure:"占位符"` tag, 占位符 = 在数据库的字段名称
+    for example: users, _ := queryStruct[Common.User]("select * from users")
 */
-func queryStruct[T interface{}](querySynax string, user T) (results []T, err error) {
+func queryStruct[T interface{}](querySynax string) (results []T, err error) {
+	log("queryStruct,syntax=", querySynax)
 	rows, err := db.Query(querySynax)
 	if err != nil {
 		fmt.Println(err)
@@ -105,6 +126,7 @@ func queryStruct[T interface{}](querySynax string, user T) (results []T, err err
 	for i := 0; i < len(colums); i++ {
 		colPtrs[i] = &cols[i]
 	}
+	var user T
 	typeUser := reflect.TypeOf(user)
 	typeUserMap := make(map[string]reflect.Type, typeUser.NumField())
 	for i := 0; i < typeUser.NumField(); i++ {
@@ -126,6 +148,10 @@ func queryStruct[T interface{}](querySynax string, user T) (results []T, err err
 				case "string":
 					myMap[colums[i]] = string(col.([]uint8))
 				case "int":
+					myMap[colums[i]], _ = strconv.Atoi(string(col.([]uint8)))
+				case "RequestState":
+					myMap[colums[i]], _ = strconv.Atoi(string(col.([]uint8)))
+				case "MemberIdentity":
 					myMap[colums[i]], _ = strconv.Atoi(string(col.([]uint8)))
 				}
 			}
@@ -155,6 +181,7 @@ func queryStruct[T interface{}](querySynax string, user T) (results []T, err err
   - tableName: 表名,例如 users
     setSyntax: 变更语句
     conditionSyntax: 条件语句
+    for example: updateRows("request_add_friend","request_state = 1", "id=27")
 */
 func updateRows(tableName string, setSyntax string, conditionSyntax string) error {
 
@@ -171,10 +198,13 @@ func updateRows(tableName string, setSyntax string, conditionSyntax string) erro
 }
 
 /*
-  - 删除表中的rows
-  - tableName: 表名,例如 users
-    setSyntax: 变更语句
-    conditionSyntax: 条件语句
+- 删除表中的rows
+- tableName: 表名,例如 users
+
+	setSyntax: 变更语句
+	conditionSyntax: 条件语句
+	for example:  delRows("friend_relation", "(user_id_1 = 100018 AND user_id_2 = 100016)
+	OR (user_id_1 = 100018 AND user_id_2 = 100016)")
 */
 func delRows(tableName string, conditionSyntax string) error {
 	var syntax = fmt.Sprintf("DELETE FROM %s where %s", tableName, conditionSyntax)
@@ -188,10 +218,6 @@ func delRows(tableName string, conditionSyntax string) error {
 	return err
 }
 
-type QueryRowInt interface {
-	getAllField() []any
-}
-
 func log(logs ...any) {
 	fmt.Println("MySQL:", logs)
 }
@@ -202,7 +228,16 @@ func elog(logs ...any) {
 	fmt.Println(logs...)
 }
 
-func Test() {
-	elog("demaxiya", "luokesas")
+func appClosed() {
+	db.Close()
+}
 
+/*
+**
+
+	测试专用接口,用于其他模块进行测试使用
+*/
+func Test[T interface{}]() []T {
+	users, _ := queryStruct[T]("select users.uid, users.user_name, users.pass_word from users INNER JOIN friend_relation ON (users.uid=friend_relation.user_id_1 or users.uid=friend_relation.user_id_2) and users.uid != 100018 where friend_relation.user_id_1 = 100018 OR friend_relation.user_id_2 = 100018")
+	return users
 }
