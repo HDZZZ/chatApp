@@ -4,7 +4,7 @@ type User struct {
 	Id       int
 	UserName string
 	Password string `json:"-"`
-	Token    string
+	Token    string `json:"Token,omitempty"`
 }
 
 type DBMessage struct {
