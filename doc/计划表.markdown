@@ -26,7 +26,10 @@
 
 
 ### 增加数据层(redis,mysql)
-
+* 增加data层,外部模块只能访问data层
+* 形成 outer -> data -> redis -> mysql 的架构
+* 调整mysql模块的架构, 行成 proxy(代理,包含业务) -> db_service(对表的操作) -> basic(数据库的增删改查)(待完成)
+* 调整redis架构, 行成类似mysql的架构, proxy -> redis_service -> basic
 
 ### 更改请求层架构, 将其更改为注册接口方式,提供需要获取的参数,并且return interface{}
 reigsterPost(url,mustParms,possibleParams,func(mustParams,possibleParams)interface{})

@@ -1,6 +1,9 @@
 package db
 
 import (
+	"errors"
+	"fmt"
+
 	Common "github.com/HDDDZ/test/chatApp/data/common"
 )
 
@@ -52,7 +55,7 @@ type MsgSQLService interface {
 }
 
 func (service *SQLService) GetUserByToken(token string) Common.User {
-	users := queryUserByToken(token)
+	users := _queryUserByAny(_user_where_token, token)
 	if len(users) == 0 {
 		return Common.User{}
 	}
@@ -60,14 +63,14 @@ func (service *SQLService) GetUserByToken(token string) Common.User {
 }
 
 func (service *SQLService) GetUserByUid(uid int) Common.User {
-	users := _queryUserByAny("users.uid", uid)
+	users := _queryUserByAny(_user_where_uid, uid)
 	if len(users) == 0 {
 		return Common.User{}
 	}
 	return users[0]
 }
 func (service *SQLService) GetUserByUids(uids string) []Common.User {
-	users := _queryUserByAny("users.uid", uids)
+	users := _queryUserByAny(_user_where_uid, uids)
 	if len(users) == 0 {
 		return []Common.User{}
 	}
@@ -75,7 +78,7 @@ func (service *SQLService) GetUserByUids(uids string) []Common.User {
 }
 
 func (service *SQLService) GetUserByUsername(username string) []Common.User {
-	users := queryUserByUserName(username)
+	users := _queryUserByAny(_user_where_user_name, username)
 	return users
 }
 
@@ -88,8 +91,24 @@ func (service *SQLService) SendRequest(sendUid int, receiverUid int, msg string)
 	return sendRequest(sendUid, receiverUid, msg)
 }
 
+/**	同意请求(更改该条请求数据, 添加好友记录)
+*	error:requstId is correct
+ */
 func (service *SQLService) AgreeRequest(requestId int) error {
-	return agreeRequest(requestId)
+
+	err := agreeRequest(requestId)
+	if err != nil {
+		return err
+	}
+	request := queryRequestById(requestId)
+	if request == (Common.ReuqestOfAddingFriend{}) {
+		return errors.New("requstId is correct")
+	}
+	err = friendWithSomeone(request.Sender_id, request.Receiver_id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (service *SQLService) RefuseRequest(requestId int) error {
@@ -128,11 +147,45 @@ func (service *SQLService) QueryRequestBySuidAndRuid(uid_1 int, uid_2 int) Commo
 func (service *SQLService) QueryRequestByUids(uid_1 int, uid_2 int) Common.ReuqestOfAddingFriend {
 	return queryRequestByUids(uid_1, uid_2)
 }
+
+/*
+*
+  - 创建群聊
+    return int: 群id, 如果失败,这是0
+    err
+*/
 func (service *SQLService) Create(ownerUid int, groupName string, memberUids ...int) (int64, error) {
-	return create(ownerUid, groupName, memberUids...)
+	id, err := create(ownerUid, groupName, memberUids...)
+	if err != nil {
+		return 0, err
+	}
+	var insertValues = make(map[int]Common.MemberIdentity, len(memberUids)+1)
+	for _, memberUid := range memberUids {
+		insertValues[memberUid] = Common.Member
+	}
+	insertValues[ownerUid] = Common.Owner
+	err = addMember(int(id), insertValues)
+
+	if err != nil {
+		fmt.Println("insert into group_members error", err)
+		return 0, err
+	}
+	return id, nil
 }
 func (service *SQLService) TransferOwner(gid int, newOwnerId int, OlderOwnerId int) error {
-	return transferOwner(gid, newOwnerId, OlderOwnerId)
+	err := transferGroupOwner(gid, newOwnerId)
+	if err != nil {
+		return err
+	}
+	err = service.UpdateMemberInfo(gid, newOwnerId, "", Common.Owner)
+	if err != nil {
+		return err
+	}
+	err = service.UpdateMemberInfo(gid, OlderOwnerId, "", Common.Member)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 func (service *SQLService) LeaveGroup(gid int, uid int) error {
 	return leaveGroup(gid, uid)
@@ -147,7 +200,11 @@ func (service *SQLService) GetAllGroupsByUid(uid int) []Common.Group {
 	return getAllGroupsByUid(uid)
 }
 func (service *SQLService) AddMember(gid int, uids ...int) error {
-	return addMember(gid, uids...)
+	var insertValues = make(map[int]Common.MemberIdentity, len(uids))
+	for _, memberUid := range uids {
+		insertValues[memberUid] = Common.Member
+	}
+	return addMember(gid, insertValues)
 }
 func (service *SQLService) RemoveMember(gid int, uids ...int) error {
 	return removeMember(gid, uids...)

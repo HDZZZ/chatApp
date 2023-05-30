@@ -1,7 +1,6 @@
 package db
 
 import (
-	"errors"
 	"fmt"
 
 	Common "github.com/HDDDZ/test/chatApp/data/common"
@@ -27,16 +26,6 @@ func agreeRequest(requestId int) error {
 		Common.AlreadyAgree), fmt.Sprintf("id = %v", requestId))
 	if err != nil {
 		fmt.Println("insert into request_add_friend error", err)
-		return err
-	}
-	request := queryRequestById(requestId)
-	if request == (Common.ReuqestOfAddingFriend{}) {
-		return errors.New("无此请求")
-	}
-
-	err = friendWithSomeone(request.Sender_id, request.Receiver_id)
-	if err != nil {
-		fmt.Println("add friend error", err)
 		return err
 	}
 	return err

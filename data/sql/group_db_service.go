@@ -21,37 +21,12 @@ func create(ownerUid int, groupName string, memberUids ...int) (int64, error) {
 		fmt.Println("insert into chat_group error", err)
 		return 0, err
 	}
-
-	var insertValues = make([][]any, len(memberUids)+1)
-	for index, memberUid := range memberUids {
-		insertValues[index] = []any{id, memberUid, Common.Member}
-	}
-	insertValues[len(insertValues)-1] = []any{id,
-		ownerUid, Common.Owner}
-
-	_, err = insertRows(_table_group_members, []string{_field_gid,
-		_field_uid, _field_identity}, insertValues...)
-
-	if err != nil {
-		fmt.Println("insert into group_members error", err)
-		return 0, err
-	}
 	return id, err
 }
 
-func transferOwner(gid int, newOwnerId int, OlderOwnerId int) error {
-
-	err := updateRows(_table_chat_group+" JOIN group_members ON chat_group.gid = group_members.gid",
-		fmt.Sprintf("chat_group.ownerId = %v , group_members.identity = %v", newOwnerId,
-			Common.Owner),
-		fmt.Sprintf("group_members.uid=%v AND chat_group.gid = %v", newOwnerId, gid))
-	if err != nil {
-		fmt.Println("update chat_group owner error", err)
-		return err
-	}
-
-	err = updateRows(_table_group_members, fmt.Sprintf("identity = %v", Common.Member),
-		fmt.Sprintf("gid=%v AND uid=%v", gid, OlderOwnerId))
+func transferGroupOwner(gid int, newOwnerId int) error {
+	err := updateRows(_table_chat_group, fmt.Sprintf("ownerId = %v", newOwnerId),
+		fmt.Sprintf("gid=%v", gid))
 	if err != nil {
 		fmt.Println("update chat_group owner error", err)
 		return err
@@ -98,7 +73,7 @@ func getAllGroupsByUid(uid int) []Common.Group {
 	return groups
 }
 
-func addMember(gid int, uids ...int) error {
+func addMember(gid int, uids map[int]Common.MemberIdentity) error {
 
 	var insertValues = make([][]any, len(uids))
 	for index, memberUid := range uids {

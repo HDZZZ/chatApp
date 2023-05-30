@@ -15,17 +15,21 @@ const _field_user_name = "user_name"
 const _field_pass_word = "pass_word"
 const _field_token = "token"
 
+const _user_where_token = "users_token.token"
+const _user_where_user_name = "users.user_name"
+const _user_where_uid = "users.uid"
+
 func queryUserByToken(token string) []Common.User {
-	return _queryUserByAny("users_token.token", token)
+	return _queryUserByAny(_user_where_token, token)
 }
 
 // 必须要有token才能查到
 func queryUserByUserName(userName string) []Common.User {
-	return _queryUserByAny("users.user_name", userName)
+	return _queryUserByAny(_user_where_user_name, userName)
 }
 
 func queryUserByUserNameAndPwd(userName string, passwrod string) (Common.User, error) {
-	users := _queryUserByAny("users.user_name", userName)
+	users := _queryUserByAny(_user_where_user_name, userName)
 	var getByUserName bool
 	for _, user := range users {
 		getByUserName = true
